@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMG Global - Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loader { border-top-color: #0066FF; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .tab-active { border-color: #0066FF; color: #0066FF; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">🇺🇬 GMG Global Admin</h1>
+                    <p class="text-sm text-gray-600">User management and transaction monitoring</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="admin-user" class="text-sm text-gray-600"></span>
+                    <button onclick="logout()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading" class="fixed inset-0 bg-white flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="loader border-4 border-gray-200 rounded-full w-12 h-12 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading admin panel...</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+                <p class="text-gray-500 text-sm font-medium">Total Users</p>
+                <p class="text-2xl font-bold mt-2" id="stat-users">0</p>
+                <p class="text-sm text-gray-600 mt-1" id="stat-active-users">0 active</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm font-medium">Total Volume</p>
+                <p class="text-2xl font-bold mt-2" id="stat-volume">UGX 0</p>
+                <p class="text-sm text-gray-600 mt-1" id="stat-transactions">0 transactions</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+                <p class="text-gray-500 text-sm font-medium">Pending</p>
+                <p class="text-2xl font-bold mt-2" id="stat-pending">0</p>
+                <p class="text-sm text-gray-600 mt-1">Awaiting action</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+                <p class="text-gray-500 text-sm font-medium">Failed</p>
+                <p class="text-2xl font-bold mt-2" id="stat-failed">0</p>
+                <p class="text-sm text-gray-600 mt-1">Last 30 days</p>
+            </div>
+        </div>
+
+        <!-- Tabs & Content -->
+        <div class="bg-white rounded-lg shadow">
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <button onclick="switchTab('users')" id="tab-users" class="px-6 py-4 border-b-2 font-medium text-sm tab-active">
+                        Users (<span id="count-users">0</span>)
+                    </button>
+                    <button onclick="switchTab('transactions')" id="tab-transactions" class="px-6 py-4 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
+                        Transactions (<span id="count-transactions">0</span>)
+                    </button>
+                    <button onclick="switchTab('kyc')" id="tab-kyc" class="px-6 py-4 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
+                        KYC Requests (<span id="count-kyc">0</span>)
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Filters -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1 relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+                        <input type="text" id="search-input" placeholder="Search..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               oninput="handleSearch()">
+                    </div>
+                    <select id="status-filter" onchange="handleFilter()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                    <button onclick="exportData()" class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        📥 Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div id="users-panel" class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">KYC</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">Loading users...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div id="transactions-panel" class="p-6 hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">Loading transactions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- KYC Panel -->
+            <div id="kyc-panel" class="p-6 hidden">
+                <div id="kyc-list" class="space-y-4">
+                    <p class="text-center text-gray-500 py-8">Loading KYC requests...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- User Detail Modal -->
+    <div id="user-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="text-xl font-bold">User Details</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div id="user-modal-content" class="p-6"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3010/api';
+        let adminToken = localStorage.getItem('admin_token');
+        let allUsers = [];
+        let allTransactions = [];
+        let currentTab = 'users';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // For demo, we'll use the regular auth token
+            adminToken = localStorage.getItem('gmg_auth_token');
+            
+            if (!adminToken) {
+                // Redirect to login or show login form
+                alert('Please login first');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            await loadData();
+            document.getElementById('loading').classList.add('hidden');
+        });
+
+        async function loadData() {
+            try {
+                // Load users (admin endpoint - for demo using mock data)
+                await loadUsers();
+                await loadTransactions();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        async function loadUsers() {
+            // For demo, generate mock users based on database
+            // In production, this would call /api/admin/users
+            try {
+                const response = await fetch(`${API_BASE}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    allUsers = data.data || [];
+                }
+            } catch (e) {
+                console.error('Failed to load users:', e);
+                allUsers = [];
+            }
+            renderUsers();
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/transactions`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    allTransactions = data.data || [];
+                }
+            } catch (e) {
+                allTransactions = [];
+            }
+            renderTransactions();
+        }
+
+        function updateStats() {
+            const activeUsers = allUsers.filter(u => u.status === 'ACTIVE').length;
+            const totalVolume = allTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+            const pending = allTransactions.filter(t => t.status === 'PENDING').length;
+            const failed = allTransactions.filter(t => t.status === 'FAILED').length;
+
+            document.getElementById('stat-users').textContent = allUsers.length;
+            document.getElementById('stat-active-users').textContent = `${activeUsers} active`;
+            document.getElementById('stat-volume').textContent = `UGX ${formatMoney(totalVolume)}`;
+            document.getElementById('stat-transactions').textContent = `${allTransactions.length} transactions`;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-failed').textContent = failed;
+            document.getElementById('count-users').textContent = allUsers.length;
+            document.getElementById('count-transactions').textContent = allTransactions.length;
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('users-table');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const status = document.getElementById('status-filter').value;
+
+            const filtered = allUsers.filter(u => {
+                const matchSearch = (u.phone || '').toLowerCase().includes(search) ||
+                                   (u.first_name || '').toLowerCase().includes(search) ||
+                                   (u.last_name || '').toLowerCase().includes(search);
+                const matchStatus = status === 'all' || u.status?.toLowerCase() === status;
+                return matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-gray-500">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(user => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${user.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.phone || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${user.first_name || ''} ${user.last_name || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${getKYCBadge(user.kyc_tier)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${getStatusBadge(user.status)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">UGX ${formatMoney(user.balance || 0)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(user.created_at)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="viewUser(${user.id})" class="text-blue-600 hover:text-blue-900 mr-2">👁️</button>
+                        ${user.status === 'ACTIVE' 
+                            ? `<button onclick="suspendUser(${user.id})" class="text-red-600 hover:text-red-900">🚫</button>`
+                            : `<button onclick="activateUser(${user.id})" class="text-green-600 hover:text-green-900">✅</button>`
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderTransactions() {
+            const tbody = document.getElementById('transactions-table');
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const status = document.getElementById('status-filter').value;
+
+            const filtered = allTransactions.filter(t => {
+                const matchSearch = (t.reference || '').toLowerCase().includes(search) ||
+                                   (t.description || '').toLowerCase().includes(search);
+                const matchStatus = status === 'all' || t.status?.toLowerCase() === status;
+                return matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-gray-500">No transactions found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(txn => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${txn.reference || txn.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${txn.user_id || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${txn.type || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">UGX ${formatMoney(txn.amount)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${getStatusBadge(txn.status)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(txn.created_at)}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${txn.description || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusBadge(status) {
+            const styles = {
+                'ACTIVE': 'bg-green-100 text-green-800',
+                'COMPLETED': 'bg-green-100 text-green-800',
+                'PENDING': 'bg-yellow-100 text-yellow-800',
+                'SUSPENDED': 'bg-red-100 text-red-800',
+                'FAILED': 'bg-red-100 text-red-800',
+                'LOCKED': 'bg-red-100 text-red-800'
+            };
+            const style = styles[status?.toUpperCase()] || 'bg-gray-100 text-gray-800';
+            return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${style}">${status || 'Unknown'}</span>`;
+        }
+
+        function getKYCBadge(tier) {
+            const colors = ['bg-red-100 text-red-800', 'bg-yellow-100 text-yellow-800', 'bg-blue-100 text-blue-800', 'bg-green-100 text-green-800'];
+            return `<span class="px-2 py-1 rounded-full text-xs font-semibold ${colors[tier] || colors[0]}">Tier ${tier || 0}</span>`;
+        }
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('en-UG').format(amount || 0);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('en-UG');
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            ['users', 'transactions', 'kyc'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('tab-active');
+                document.getElementById(`tab-${t}`).classList.add('border-transparent', 'text-gray-500');
+                document.getElementById(`${t}-panel`).classList.add('hidden');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById(`${tab}-panel`).classList.remove('hidden');
+
+            // Update filter options
+            const filter = document.getElementById('status-filter');
+            if (tab === 'users') {
+                filter.innerHTML = '<option value="all">All Status</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="pending">Pending</option>';
+            } else {
+                filter.innerHTML = '<option value="all">All Status</option><option value="completed">Completed</option><option value="pending">Pending</option><option value="failed">Failed</option>';
+            }
+        }
+
+        function handleSearch() {
+            if (currentTab === 'users') renderUsers();
+            else renderTransactions();
+        }
+
+        function handleFilter() {
+            if (currentTab === 'users') renderUsers();
+            else renderTransactions();
+        }
+
+        function viewUser(userId) {
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            const userTxns = allTransactions.filter(t => t.user_id === userId).slice(0, 5);
+
+            document.getElementById('user-modal-content').innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div><p class="text-sm font-medium text-gray-500">User ID</p><p class="mt-1">${user.id}</p></div>
+                    <div><p class="text-sm font-medium text-gray-500">Status</p><div class="mt-1">${getStatusBadge(user.status)}</div></div>
+                    <div><p class="text-sm font-medium text-gray-500">Phone</p><p class="mt-1">${user.phone}</p></div>
+                    <div><p class="text-sm font-medium text-gray-500">Name</p><p class="mt-1">${user.first_name} ${user.last_name}</p></div>
+                    <div><p class="text-sm font-medium text-gray-500">KYC Tier</p><div class="mt-1">${getKYCBadge(user.kyc_tier)}</div></div>
+                    <div><p class="text-sm font-medium text-gray-500">Balance</p><p class="mt-1">UGX ${formatMoney(user.balance)}</p></div>
+                    <div><p class="text-sm font-medium text-gray-500">Registered</p><p class="mt-1">${formatDate(user.created_at)}</p></div>
+                    <div><p class="text-sm font-medium text-gray-500">Last Login</p><p class="mt-1">${formatDate(user.last_login)}</p></div>
+                </div>
+                <div class="mt-6 pt-4 border-t">
+                    <h3 class="font-medium mb-3">Recent Transactions</h3>
+                    ${userTxns.length > 0 ? userTxns.map(t => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded mb-2">
+                            <div><p class="text-sm font-medium">${t.reference || t.id}</p><p class="text-xs text-gray-500">${formatDate(t.created_at)}</p></div>
+                            <div class="text-right"><p class="text-sm font-semibold">UGX ${formatMoney(t.amount)}</p>${getStatusBadge(t.status)}</div>
+                        </div>
+                    `).join('') : '<p class="text-gray-500 text-sm">No transactions</p>'}
+                </div>
+                <div class="mt-6 flex gap-3">
+                    ${user.status === 'ACTIVE' 
+                        ? `<button onclick="suspendUser(${user.id}); closeModal();" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Suspend User</button>`
+                        : `<button onclick="activateUser(${user.id}); closeModal();" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">Activate User</button>`
+                    }
+                </div>
+            `;
+            document.getElementById('user-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('user-modal').classList.add('hidden');
+        }
+
+        async function suspendUser(userId) {
+            if (!confirm('Are you sure you want to suspend this user?')) return;
+            // API call would go here
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.status = 'SUSPENDED';
+            renderUsers();
+            alert('User suspended');
+        }
+
+        async function activateUser(userId) {
+            if (!confirm('Are you sure you want to activate this user?')) return;
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.status = 'ACTIVE';
+            renderUsers();
+            alert('User activated');
+        }
+
+        function exportData() {
+            const data = currentTab === 'users' ? allUsers : allTransactions;
+            if (data.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            const csv = [
+                Object.keys(data[0]).join(','),
+                ...data.map(row => Object.values(row).map(v => typeof v === 'string' && v.includes(',') ? `"${v}"` : v).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTab}_export_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function logout() {
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('gmg_auth_token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

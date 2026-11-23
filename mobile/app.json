@@ -1,0 +1,141 @@
+{
+  "expo": {
+    "name": "GMG Global",
+    "slug": "gmg-global",
+    "owner": "ssenkula",
+    "version": "1.0.0",
+    "scheme": "gmgglobal",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "newArchEnabled": true,
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#87CEEB"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gmgglobal.app",
+      "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to securely access your wallet",
+        "NSCameraUsageDescription": "GMG Global needs camera access to scan QR codes and take photos for KYC verification",
+        "NSPhotoLibraryUsageDescription": "GMG Global needs photo library access to upload documents for KYC verification",
+        "NSPhotoLibraryAddUsageDescription": "GMG Global needs permission to save receipts and QR codes to your photo library",
+        "NSContactsUsageDescription": "GMG Global can access your contacts to make sending money easier",
+        "NSLocationWhenInUseUsageDescription": "GMG Global uses your location for fraud prevention and nearby services",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GMG Global uses your location for fraud prevention and nearby services",
+        "NSUserTrackingUsageDescription": "GMG Global uses this to provide personalized offers and improve your experience",
+        "NSMicrophoneUsageDescription": "GMG Global may use the microphone for voice commands and customer support calls",
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "associatedDomains": [
+        "applinks:gmgglobal.com"
+      ],
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          }
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#87CEEB"
+      },
+      "package": "com.gmgglobal.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_CONTACTS",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_PHONE_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-splash-screen",
+      "expo-secure-store",
+      "expo-apple-authentication",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow GMG Global to use Face ID for secure authentication"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "GMG Global needs camera access to scan QR codes and take photos for KYC verification"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "GMG Global needs photo library access to upload documents for KYC verification",
+          "cameraPermission": "GMG Global needs camera access to take photos for KYC verification"
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "GMG Global can access your contacts to make sending money easier"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "GMG Global uses your location for fraud prevention and nearby services"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0066FF"
+        }
+      ],
+      "expo-web-browser",
+      "expo-build-properties"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "00170de9-99a3-41c9-9791-b6ad937410b9"
+      }
+    }
+  }
+}

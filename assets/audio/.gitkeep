@@ -1,0 +1,7 @@
+# Audio Files - Notifications, alerts, feedback sounds
+# Recommended format: MP3 (universal), OGG (web)
+#
+# - notification.mp3
+# - success.mp3
+# - error.mp3
+# - transaction-complete.mp3

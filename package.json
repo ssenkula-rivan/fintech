@@ -1,0 +1,12 @@
+{
+  "name": "gmg-uganda",
+  "version": "1.0.0",
+  "description": "GMG Uganda - Mobile Money & Payments Platform",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "cd api && npm run dev"
+  },
+  "keywords": ["fintech", "mobile-money", "uganda", "payments"],
+  "author": "GMG Team",
+  "license": "MIT"
+}

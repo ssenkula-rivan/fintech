@@ -1,0 +1,7 @@
+# Splash screens - Multiple resolutions for different devices
+# Required sizes:
+# - splash-640x1136.png (iPhone 5)
+# - splash-750x1334.png (iPhone 6/7/8)
+# - splash-1125x2436.png (iPhone X/11)
+# - splash-1242x2688.png (iPhone 11 Pro Max)
+# - splash-1536x2048.png (iPad)

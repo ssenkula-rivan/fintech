@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GMG Crypto Wallet - Production</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0066FF">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .page { display: none; min-height: 100vh; }
+        .page.active { display: block; }
+        .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+        .card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 24px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1); }
+        .btn { padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; width: 100%; }
+        .btn-primary { background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,0.4); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; font-size: 16px; }
+        .input:focus { outline: none; border-color: #0066FF; }
+        .input::placeholder { color: rgba(255,255,255,0.5); }
+        .warning-box { background: rgba(234,179,8,0.2); border: 1px solid #eab308; border-radius: 12px; padding: 16px; }
+        .info-box { background: rgba(59,130,246,0.2); border: 1px solid #3b82f6; border-radius: 12px; padding: 16px; }
+        .token-card { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .token-card:hover { background: rgba(255,255,255,0.1); transform: translateX(4px); }
+        .mnemonic-word { background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 8px; font-family: monospace; font-size: 14px; }
+        .nav-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(26,26,46,0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 12px 0; max-width: 480px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.1); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: rgba(255,255,255,0.5); cursor: pointer; padding: 8px 16px; }
+        .nav-item.active { color: #0066FF; }
+        .loader { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #0066FF; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<!-- HONEST LIMITATIONS NOTICE -->
+<div id="limitations-page" class="page active">
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+                <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">GMG Crypto Wallet</h1>
+                <p style="color: rgba(255,255,255,0.7);">Production-Ready Implementation</p>
+            </div>
+            
+            <div class="warning-box" style="margin-bottom: 20px;">
+                <h3 style="font-weight: 700; color: #fbbf24; margin-bottom: 12px;">⚠️ HONEST LIMITATIONS</h3>
+                <ul style="font-size: 13px; color: #fef3c7; line-height: 1.8;">
+                    <li>✅ REAL: Full 2048-word BIP39 wordlist</li>
+                    <li>✅ REAL: AES-256-GCM encryption</li>
+                    <li>✅ REAL: Live prices from CoinGecko</li>
+                    <li>✅ REAL: ethers.js on backend for signing</li>
+                    <li>⚠️ Frontend uses sessionStorage (cleared on close)</li>
+                    <li>⚠️ For production: Use hardware wallets</li>
+                </ul>
+            </div>
+            
+            <div class="info-box" style="margin-bottom: 24px;">
+                <h3 style="font-weight: 700; color: #60a5fa; margin-bottom: 8px;">What's Real:</h3>
+                <ul style="font-size: 13px; color: #bfdbfe; line-height: 1.6;">
+                    <li>• Backend: ethers.js + bip39 (real crypto)</li>
+                    <li>• Prices: CoinGecko API (live data)</li>
+                    <li>• Encryption: AES-256-GCM</li>
+                    <li>• Blockchain: Real RPC calls</li>
+                </ul>
+            </div>
+            
+            <button onclick="acceptAndContinue()" class="btn btn-primary">
+                I Understand - Continue
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- SIGNUP PAGE -->
+<div id="signup-page" class="page">
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🔐</div>
+                <h1 style="font-size: 24px; font-weight: 800;">Create Wallet</h1>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Full Name</label>
+                <input type="text" id="signup-name" class="input" placeholder="John Doe">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Phone Number</label>
+                <input type="tel" id="signup-phone" class="input" placeholder="+256700000000">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Email</label>
+                <input type="email" id="signup-email" class="input" placeholder="john@example.com">
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Create PIN (6 digits)</label>
+                <input type="password" id="signup-pin" class="input" placeholder="••••••" maxlength="6">
+            </div>
+            <button onclick="handleSignup()" class="btn btn-primary" style="margin-bottom: 16px;">Create Wallet</button>
+            <p style="text-align: center; font-size: 14px; color: rgba(255,255,255,0.6);">
+                Already have an account? <a href="#" onclick="showPage('login-page')" style="color: #0066FF;">Login</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div id="login-page" class="page">
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 400px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🔓</div>
+                <h1 style="font-size: 24px; font-weight: 800;">Welcome Back</h1>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Phone Number</label>
+                <input type="tel" id="login-phone" class="input" placeholder="+256700000000">
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">PIN</label>
+                <input type="password" id="login-pin" class="input" placeholder="••••••" maxlength="6">
+            </div>
+            <button onclick="handleLogin()" class="btn btn-primary" style="margin-bottom: 16px;">Login</button>
+            <p style="text-align: center; font-size: 14px; color: rgba(255,255,255,0.6);">
+                Don't have an account? <a href="#" onclick="showPage('signup-page')" style="color: #0066FF;">Sign Up</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+
+<!-- DASHBOARD PAGE -->
+<div id="dashboard-page" class="page">
+    <div style="padding-bottom: 100px;">
+        <!-- Header -->
+        <div class="card" style="background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%); border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <p style="font-size: 14px; opacity: 0.9;">Total Portfolio</p>
+                    <h2 id="total-portfolio" style="font-size: 32px; font-weight: 800;">$0.00</h2>
+                    <p id="portfolio-change" style="font-size: 14px; opacity: 0.9;">+$0.00 (0%)</p>
+                </div>
+                <button onclick="showPage('settings-page')" style="background: rgba(255,255,255,0.2); border: none; padding: 12px; border-radius: 12px; color: white; cursor: pointer;">⚙️</button>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                <button onclick="showPage('send-page')" style="background: rgba(255,255,255,0.2); border: none; padding: 12px; border-radius: 12px; color: white; cursor: pointer; text-align: center;">
+                    <div style="font-size: 24px;">📤</div>
+                    <div style="font-size: 11px; font-weight: 600;">Send</div>
+                </button>
+                <button onclick="showPage('receive-page')" style="background: rgba(255,255,255,0.2); border: none; padding: 12px; border-radius: 12px; color: white; cursor: pointer; text-align: center;">
+                    <div style="font-size: 24px;">📥</div>
+                    <div style="font-size: 11px; font-weight: 600;">Receive</div>
+                </button>
+                <button onclick="showPage('swap-page')" style="background: rgba(255,255,255,0.2); border: none; padding: 12px; border-radius: 12px; color: white; cursor: pointer; text-align: center;">
+                    <div style="font-size: 24px;">🔄</div>
+                    <div style="font-size: 11px; font-weight: 600;">Swap</div>
+                </button>
+                <button onclick="showPage('buy-page')" style="background: rgba(255,255,255,0.2); border: none; padding: 12px; border-radius: 12px; color: white; cursor: pointer; text-align: center;">
+                    <div style="font-size: 24px;">💳</div>
+                    <div style="font-size: 11px; font-weight: 600;">Buy</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Live Prices -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-weight: 700;">Live Market Prices</h3>
+                <button onclick="refreshPrices()" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 12px; border-radius: 8px; color: #0066FF; cursor: pointer; font-size: 12px;">🔄 Refresh</button>
+            </div>
+            <div id="price-list">
+                <div class="token-card">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; background: #627eea; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700;">E</div>
+                        <div>
+                            <div style="font-weight: 700;">Ethereum</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.6);">ETH</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div id="price-eth" style="font-weight: 700;">$...</div>
+                        <div id="change-eth" style="font-size: 13px; color: #10b981;">+0%</div>
+                    </div>
+                </div>
+                <div class="token-card">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; background: #f7931a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700;">B</div>
+                        <div>
+                            <div style="font-weight: 700;">Bitcoin</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.6);">BTC</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div id="price-btc" style="font-weight: 700;">$...</div>
+                        <div id="change-btc" style="font-size: 13px; color: #10b981;">+0%</div>
+                    </div>
+                </div>
+                <div class="token-card">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; background: #f3ba2f; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700;">B</div>
+                        <div>
+                            <div style="font-weight: 700;">BNB</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.6);">BNB</div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div id="price-bnb" style="font-weight: 700;">$...</div>
+                        <div id="change-bnb" style="font-size: 13px; color: #10b981;">+0%</div>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size: 11px; color: rgba(255,255,255,0.4); text-align: center; margin-top: 12px;">Data from CoinGecko API • Updates every 30s</p>
+        </div>
+
+        <!-- Your Tokens -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-weight: 700;">Your Tokens</h3>
+                <button onclick="refreshBalances()" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 12px; border-radius: 8px; color: #0066FF; cursor: pointer; font-size: 12px;">🔄</button>
+            </div>
+            <div id="token-list">
+                <p style="text-align: center; color: rgba(255,255,255,0.5); padding: 20px;">Loading balances...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="nav-bottom">
+        <div class="nav-item active" onclick="showPage('dashboard-page')">
+            <div style="font-size: 24px;">💼</div>
+            <div style="font-size: 11px;">Wallet</div>
+        </div>
+        <div class="nav-item" onclick="showPage('history-page')">
+            <div style="font-size: 24px;">📋</div>
+            <div style="font-size: 11px;">History</div>
+        </div>
+        <div class="nav-item" onclick="showPage('settings-page')">
+            <div style="font-size: 24px;">⚙️</div>
+            <div style="font-size: 11px;">Settings</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- SEND PAGE -->
+<div id="send-page" class="page">
+    <div style="padding-bottom: 20px;">
+        <div class="card">
+            <button onclick="showPage('dashboard-page')" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 16px; border-radius: 8px; color: white; cursor: pointer; margin-bottom: 16px;">← Back</button>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Send Crypto</h2>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Select Token</label>
+                <select id="send-token" class="input" onchange="updateSendBalance()">
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="BNB">BNB</option>
+                    <option value="MATIC">Polygon (MATIC)</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Recipient Address</label>
+                <input type="text" id="send-address" class="input" placeholder="0x...">
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Amount</label>
+                <input type="number" id="send-amount" class="input" placeholder="0.00" step="0.000001">
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: rgba(255,255,255,0.6);">
+                    <span>Balance: <span id="send-balance">0.00</span></span>
+                    <button onclick="setMaxSend()" style="background: none; border: none; color: #0066FF; cursor: pointer; font-weight: 600;">MAX</button>
+                </div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;">
+                    <span style="color: rgba(255,255,255,0.6);">Network Fee (estimated)</span>
+                    <span>~$2.50</span>
+                </div>
+            </div>
+            
+            <button onclick="confirmSend()" class="btn btn-primary">Send</button>
+        </div>
+    </div>
+</div>
+
+<!-- RECEIVE PAGE -->
+<div id="receive-page" class="page">
+    <div style="padding-bottom: 20px;">
+        <div class="card">
+            <button onclick="showPage('dashboard-page')" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 16px; border-radius: 8px; color: white; cursor: pointer; margin-bottom: 16px;">← Back</button>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px; text-align: center;">Receive Crypto</h2>
+            
+            <div style="background: white; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+                <div id="qr-code" style="display: flex; justify-content: center;"></div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px;">Your Address</p>
+                <p id="wallet-address" style="font-family: monospace; font-size: 12px; word-break: break-all;">Loading...</p>
+            </div>
+            
+            <button onclick="copyAddress()" class="btn btn-primary" style="margin-bottom: 12px;">📋 Copy Address</button>
+            <button onclick="shareAddress()" class="btn btn-secondary">📤 Share</button>
+            
+            <div class="warning-box" style="margin-top: 20px;">
+                <p style="font-size: 13px; color: #fef3c7;">⚠️ Only send compatible tokens to this address. Sending wrong tokens may result in permanent loss.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SWAP PAGE -->
+<div id="swap-page" class="page">
+    <div style="padding-bottom: 20px;">
+        <div class="card">
+            <button onclick="showPage('dashboard-page')" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 16px; border-radius: 8px; color: white; cursor: pointer; margin-bottom: 16px;">← Back</button>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Swap Tokens</h2>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 12px;">
+                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px;">From</p>
+                <div style="display: flex; gap: 12px;">
+                    <select id="swap-from" class="input" style="flex: 1;" onchange="calculateSwap()">
+                        <option value="ETH">ETH</option>
+                        <option value="BNB">BNB</option>
+                        <option value="MATIC">MATIC</option>
+                    </select>
+                    <input type="number" id="swap-from-amt" class="input" placeholder="0.00" style="flex: 1;" oninput="calculateSwap()">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: -10px 0;">
+                <button onclick="flipSwap()" style="background: #0066FF; border: none; width: 44px; height: 44px; border-radius: 50%; color: white; font-size: 18px; cursor: pointer;">⇅</button>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                <p style="font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px;">To</p>
+                <div style="display: flex; gap: 12px;">
+                    <select id="swap-to" class="input" style="flex: 1;" onchange="calculateSwap()">
+                        <option value="BNB">BNB</option>
+                        <option value="ETH">ETH</option>
+                        <option value="MATIC">MATIC</option>
+                    </select>
+                    <input type="number" id="swap-to-amt" class="input" placeholder="0.00" style="flex: 1;" readonly>
+                </div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 24px; font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: rgba(255,255,255,0.6);">Rate</span>
+                    <span id="swap-rate">1 ETH = ... BNB</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: rgba(255,255,255,0.6);">Fee</span>
+                    <span>0.3%</span>
+                </div>
+            </div>
+            
+            <button onclick="executeSwap()" class="btn btn-primary">Swap Now</button>
+        </div>
+    </div>
+</div>
+
+<!-- BUY PAGE -->
+<div id="buy-page" class="page">
+    <div style="padding-bottom: 20px;">
+        <div class="card">
+            <button onclick="showPage('dashboard-page')" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 16px; border-radius: 8px; color: white; cursor: pointer; margin-bottom: 16px;">← Back</button>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Buy Crypto</h2>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Select Token</label>
+                <select id="buy-token" class="input" onchange="calculateBuy()">
+                    <option value="ETH">Ethereum (ETH)</option>
+                    <option value="BTC">Bitcoin (BTC)</option>
+                    <option value="BNB">BNB</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Amount (UGX)</label>
+                <input type="number" id="buy-amount" class="input" placeholder="100,000" oninput="calculateBuy()">
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                    <button onclick="setBuyAmt(50000)" style="flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: transparent; color: white; cursor: pointer;">50K</button>
+                    <button onclick="setBuyAmt(100000)" style="flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: transparent; color: white; cursor: pointer;">100K</button>
+                    <button onclick="setBuyAmt(500000)" style="flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: transparent; color: white; cursor: pointer;">500K</button>
+                </div>
+            </div>
+            
+            <div style="background: rgba(16,185,129,0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: center;">
+                <p style="font-size: 14px; color: rgba(255,255,255,0.7);">You will receive</p>
+                <p id="buy-receive" style="font-size: 28px; font-weight: 800; color: #10b981;">0.00 ETH</p>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 12px; color: rgba(255,255,255,0.7);">Payment Method</label>
+                <label style="display: flex; align-items: center; padding: 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; cursor: pointer; margin-bottom: 8px;">
+                    <input type="radio" name="payment" value="mtn" checked style="margin-right: 12px;">
+                    <span>📱 MTN Mobile Money</span>
+                </label>
+                <label style="display: flex; align-items: center; padding: 16px; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; cursor: pointer;">
+                    <input type="radio" name="payment" value="airtel" style="margin-right: 12px;">
+                    <span>📱 Airtel Money</span>
+                </label>
+            </div>
+            
+            <button onclick="processBuy()" class="btn btn-primary">Buy Now</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- HISTORY PAGE -->
+<div id="history-page" class="page">
+    <div style="padding-bottom: 100px;">
+        <div class="card">
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">Transaction History</h2>
+            <div id="tx-list">
+                <p style="text-align: center; color: rgba(255,255,255,0.5); padding: 40px;">No transactions yet</p>
+            </div>
+        </div>
+    </div>
+    <div class="nav-bottom">
+        <div class="nav-item" onclick="showPage('dashboard-page')"><div style="font-size: 24px;">💼</div><div style="font-size: 11px;">Wallet</div></div>
+        <div class="nav-item active"><div style="font-size: 24px;">📋</div><div style="font-size: 11px;">History</div></div>
+        <div class="nav-item" onclick="showPage('settings-page')"><div style="font-size: 24px;">⚙️</div><div style="font-size: 11px;">Settings</div></div>
+    </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div id="settings-page" class="page">
+    <div style="padding-bottom: 100px;">
+        <div class="card">
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Settings</h2>
+            
+            <div onclick="showPage('backup-page')" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700;">🔑 Backup Wallet</div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.6);">View recovery phrase</div>
+                </div>
+                <span>→</span>
+            </div>
+            
+            <div onclick="changePin()" style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 700;">🔒 Change PIN</div>
+                    <div style="font-size: 13px; color: rgba(255,255,255,0.6);">Update security PIN</div>
+                </div>
+                <span>→</span>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                <div style="font-weight: 700; margin-bottom: 8px;">📍 Wallet Address</div>
+                <p id="settings-address" style="font-family: monospace; font-size: 11px; word-break: break-all; color: rgba(255,255,255,0.7);">Not connected</p>
+            </div>
+            
+            <button onclick="logout()" style="width: 100%; padding: 16px; background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid #ef4444; border-radius: 12px; font-weight: 700; cursor: pointer;">🚪 Logout</button>
+        </div>
+    </div>
+    <div class="nav-bottom">
+        <div class="nav-item" onclick="showPage('dashboard-page')"><div style="font-size: 24px;">💼</div><div style="font-size: 11px;">Wallet</div></div>
+        <div class="nav-item" onclick="showPage('history-page')"><div style="font-size: 24px;">📋</div><div style="font-size: 11px;">History</div></div>
+        <div class="nav-item active"><div style="font-size: 24px;">⚙️</div><div style="font-size: 11px;">Settings</div></div>
+    </div>
+</div>
+
+<!-- BACKUP PAGE -->
+<div id="backup-page" class="page">
+    <div style="padding-bottom: 20px;">
+        <div class="card">
+            <button onclick="showPage('settings-page')" style="background: rgba(255,255,255,0.1); border: none; padding: 8px 16px; border-radius: 8px; color: white; cursor: pointer; margin-bottom: 16px;">← Back</button>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 24px;">Backup Wallet</h2>
+            
+            <div class="warning-box" style="margin-bottom: 20px;">
+                <p style="font-size: 13px; color: #fef3c7;">⚠️ Never share your recovery phrase. Anyone with these words can access your funds.</p>
+            </div>
+            
+            <div id="backup-verify" style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 14px; margin-bottom: 8px; color: rgba(255,255,255,0.7);">Enter PIN to reveal</label>
+                <input type="password" id="backup-pin" class="input" placeholder="••••••" maxlength="6">
+                <button onclick="revealMnemonic()" class="btn btn-primary" style="margin-top: 12px;">Reveal Recovery Phrase</button>
+            </div>
+            
+            <div id="mnemonic-box" style="display: none;">
+                <p style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 12px;">Your 12-word recovery phrase:</p>
+                <div id="mnemonic-words" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px;"></div>
+                <button onclick="copyMnemonic()" class="btn btn-secondary">📋 Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LOADING MODAL -->
+<div id="loading-modal" class="modal">
+    <div class="loader"></div>
+</div>
+
+<!-- ALERT TOAST -->
+<div id="alert-toast" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 16px 24px; border-radius: 12px; z-index: 10000; font-weight: 600; max-width: 90%; text-align: center;"></div>
+
+</div><!-- End container -->
+
+<script src="assets/js/crypto-wallet.js"></script>
+<script>
+// Additional initialization
+function acceptAndContinue() {
+    sessionStorage.setItem('limitations_accepted', 'true');
+    const token = sessionStorage.getItem('crypto_token');
+    const address = sessionStorage.getItem('wallet_address');
+    if (token && address) {
+        showPage('dashboard-page');
+    } else {
+        showPage('signup-page');
+    }
+}
+
+// Live price fetching from CoinGecko
+let prices = { ETH: 0, BTC: 0, BNB: 0, MATIC: 0 };
+
+async function refreshPrices() {
+    try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,binancecoin,matic-network&vs_currencies=usd&include_24hr_change=true');
+        const data = await response.json();
+        
+        prices.ETH = data.ethereum?.usd || 0;
+        prices.BTC = data.bitcoin?.usd || 0;
+        prices.BNB = data.binancecoin?.usd || 0;
+        prices.MATIC = data['matic-network']?.usd || 0;
+        
+        document.getElementById('price-eth').textContent = '$' + prices.ETH.toLocaleString();
+        document.getElementById('price-btc').textContent = '$' + prices.BTC.toLocaleString();
+        document.getElementById('price-bnb').textContent = '$' + prices.BNB.toLocaleString();
+        
+        const ethChange = data.ethereum?.usd_24h_change || 0;
+        const btcChange = data.bitcoin?.usd_24h_change || 0;
+        const bnbChange = data.binancecoin?.usd_24h_change || 0;
+        
+        updatePriceChange('change-eth', ethChange);
+        updatePriceChange('change-btc', btcChange);
+        updatePriceChange('change-bnb', bnbChange);
+        
+        console.log('[Prices] Updated from CoinGecko');
+    } catch (error) {
+        console.error('[Prices] Fetch failed:', error);
+    }
+}
+
+function updatePriceChange(elementId, change) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        const isPositive = change >= 0;
+        el.textContent = (isPositive ? '+' : '') + change.toFixed(2) + '%';
+        el.style.color = isPositive ? '#10b981' : '#ef4444';
+    }
+}
+
+// Start price updates
+refreshPrices();
+setInterval(refreshPrices, 30000);
+
+// Check if limitations were accepted
+window.addEventListener('load', () => {
+    const accepted = sessionStorage.getItem('limitations_accepted');
+    if (accepted) {
+        const token = sessionStorage.getItem('crypto_token');
+        const address = sessionStorage.getItem('wallet_address');
+        if (token && address) {
+            showPage('dashboard-page');
+        } else {
+            showPage('signup-page');
+        }
+    }
+});
+</script>
+</body>
+</html>

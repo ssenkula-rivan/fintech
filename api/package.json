@@ -1,0 +1,75 @@
+{
+  "name": "gmg-global-api",
+  "version": "1.0.0",
+  "description": "GMG Global Financial Services API - Mobile Money & Crypto Wallet",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "docker:start": "node scripts/wait-for-db.js && node server.js",
+    "test": "jest --coverage --detectOpenHandles",
+    "test:unit": "jest --testPathPattern=tests/unit --detectOpenHandles",
+    "test:integration": "jest --testPathPattern=tests/integration --detectOpenHandles",
+    "test:e2e": "jest --testPathPattern=tests/e2e --detectOpenHandles",
+    "test:all": "jest --coverage --detectOpenHandles",
+    "test:watch": "jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "audit": "npm audit --audit-level=high",
+    "migrate": "node scripts/migrate.js",
+    "db:wait": "node scripts/wait-for-db.js",
+    "backup": "node -e \"require('./services/backup').createBackup().then(console.log)\"",
+    "load-test": "node scripts/load-test.js",
+    "load-test:prod": "node scripts/load-test.js --url https://api.gmguganda.com --users 100 --duration 60",
+    "precommit": "npm run lint && npm run test:unit",
+    "health": "curl -f http://localhost:3010/health || exit 1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "africastalking": "^0.7.8",
+    "axios": "^1.6.2",
+    "bcryptjs": "^2.4.3",
+    "bip39": "^3.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.9.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.1",
+    "google-auth-library": "^10.5.0",
+    "helmet": "^7.2.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.6.5",
+    "rate-limit-redis": "^4.3.0",
+    "redis": "^4.6.11",
+    "uuid": "^9.0.1",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "middleware/**/*.js",
+      "!**/node_modules/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 30,
+        "functions": 40,
+        "lines": 30,
+        "statements": 30
+      }
+    },
+    "testTimeout": 10000
+  }
+}

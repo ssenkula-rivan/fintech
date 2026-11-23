@@ -1,0 +1,7 @@
+# Custom Fonts
+# Recommended formats: WOFF2 (primary), WOFF (fallback), TTF (legacy)
+#
+# Example structure:
+# - Inter-Regular.woff2
+# - Inter-Medium.woff2
+# - Inter-Bold.woff2

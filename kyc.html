@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMG Uganda - KYC Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; }
+        .gradient-primary { background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%); }
+        .page { display: none; }
+        .page.active { display: block; }
+        .tier-badge { padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
+        .tier-0 { background: #fee2e2; color: #991b1b; }
+        .tier-1 { background: #fef3c7; color: #92400e; }
+        .tier-2 { background: #dbeafe; color: #1e40af; }
+        .tier-3 { background: #dcfce7; color: #166534; }
+        .step-indicator { display: flex; align-items: center; margin-bottom: 24px; }
+        .step { flex: 1; position: relative; }
+        .step-number { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; background: #e5e7eb; color: #6b7280; margin: 0 auto 8px; }
+        .step.active .step-number { background: #0066FF; color: white; }
+        .step.completed .step-number { background: #10b981; color: white; }
+        .step-line { position: absolute; top: 20px; left: 50%; right: -50%; height: 2px; background: #e5e7eb; z-index: -1; }
+        .step.completed .step-line { background: #10b981; }
+        .step:last-child .step-line { display: none; }
+        .upload-zone { border: 2px dashed #d1d5db; border-radius: 12px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-zone:hover { border-color: #0066FF; background: #f9fafb; }
+        .upload-zone.dragover { border-color: #0066FF; background: #eef2ff; }
+        .preview-image { max-width: 100%; max-height: 300px; border-radius: 12px; object-fit: contain; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; max-width: 500px; width: 90%; border-radius: 24px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .spinner { border: 3px solid #f3f4f6; border-top: 3px solid #0066FF; border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<!-- KYC OVERVIEW PAGE -->
+<div id="kyc-overview-page" class="page active">
+    <div class="max-w-2xl mx-auto p-4">
+        <header class="gradient-primary text-white p-6 rounded-2xl mb-6">
+            <button onclick="goBack()" class="mb-4 p-2 bg-white/20 rounded-xl">← Back</button>
+            <h1 class="text-2xl font-bold mb-2">Identity Verification (KYC)</h1>
+            <p class="text-sm opacity-90">Increase your transaction limits by verifying your identity</p>
+        </header>
+
+        <!-- Current Tier Status -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <p class="text-gray-500 text-sm">Current KYC Level</p>
+                    <div class="mt-2">
+                        <span class="tier-badge tier-1" id="current-tier">TIER 1 - Basic</span>
+                    </div>
+                </div>
+                <div class="text-5xl">📋</div>
+            </div>
+            <div class="mt-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-600">Verification Progress</span>
+                    <span class="font-semibold" id="progress-text">25%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all" style="width: 25%" id="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tier Comparison -->
+        <div class="space-y-4 mb-6">
+            <h2 class="text-xl font-bold text-gray-800">KYC Tiers & Limits</h2>
+
+            <!-- Tier 1 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-yellow-200">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <span class="tier-badge tier-1">TIER 1 - Basic</span>
+                        <p class="text-sm text-gray-500 mt-2">Phone number verification only</p>
+                    </div>
+                    <span class="text-2xl">📱</span>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-600">Daily Send Limit:</span><span class="font-semibold">UGX 500,000</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Daily Receive Limit:</span><span class="font-semibold">UGX 1,000,000</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Max Balance:</span><span class="font-semibold">UGX 2,000,000</span></div>
+                </div>
+            </div>
+
+            <!-- Tier 2 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-blue-200">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <span class="tier-badge tier-2">TIER 2 - Verified</span>
+                        <p class="text-sm text-gray-500 mt-2">National ID + Selfie required</p>
+                    </div>
+                    <span class="text-2xl">🪪</span>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-600">Daily Send Limit:</span><span class="font-semibold">UGX 5,000,000</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Daily Receive Limit:</span><span class="font-semibold">UGX 10,000,000</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Max Balance:</span><span class="font-semibold">UGX 20,000,000</span></div>
+                </div>
+                <button onclick="startKYC(2)" class="mt-4 w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition">Upgrade to Tier 2 →</button>
+            </div>
+
+            <!-- Tier 3 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border-2 border-green-200">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <span class="tier-badge tier-3">TIER 3 - Premium</span>
+                        <p class="text-sm text-gray-500 mt-2">Full verification + Proof of address</p>
+                    </div>
+                    <span class="text-2xl">⭐</span>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-600">Daily Send Limit:</span><span class="font-semibold">UGX 50,000,000</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Daily Receive Limit:</span><span class="font-semibold">Unlimited</span></div>
+                    <div class="flex justify-between"><span class="text-gray-600">Max Balance:</span><span class="font-semibold">Unlimited</span></div>
+                </div>
+                <button onclick="startKYC(3)" class="mt-4 w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">Upgrade to Tier 3 →</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KYC VERIFICATION FLOW PAGE -->
+<div id="kyc-flow-page" class="page">
+    <div class="max-w-2xl mx-auto p-4 pb-8">
+        <header class="gradient-primary text-white p-6 rounded-2xl mb-6">
+            <button onclick="showPage('kyc-overview-page')" class="mb-4 p-2 bg-white/20 rounded-xl">← Back</button>
+            <h1 class="text-2xl font-bold mb-2">KYC Verification</h1>
+            <p class="text-sm opacity-90" id="tier-upgrade-text">Upgrading to Tier 2</p>
+        </header>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator mb-8">
+            <div class="step active" id="step-1-indicator">
+                <div class="step-number">1</div>
+                <div class="text-xs text-center font-medium">Personal Info</div>
+                <div class="step-line"></div>
+            </div>
+            <div class="step" id="step-2-indicator">
+                <div class="step-number">2</div>
+                <div class="text-xs text-center font-medium">ID Upload</div>
+                <div class="step-line"></div>
+            </div>
+            <div class="step" id="step-3-indicator">
+                <div class="step-number">3</div>
+                <div class="text-xs text-center font-medium">Selfie</div>
+                <div class="step-line"></div>
+            </div>
+            <div class="step" id="step-4-indicator">
+                <div class="step-number">4</div>
+                <div class="text-xs text-center font-medium">Review</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Personal Information -->
+        <div id="kyc-step-1" class="bg-white rounded-2xl p-6 shadow-sm fade-in">
+            <h2 class="text-xl font-bold mb-6">Personal Information</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Legal Name *</label>
+                    <input type="text" id="full-name" placeholder="As per National ID" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                        <input type="date" id="dob" max="2006-12-31" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                        <select id="gender" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                            <option value="">Select</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">National ID Number *</label>
+                    <input type="text" id="national-id" placeholder="CM12345678910XYZ" maxlength="14" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none uppercase">
+                    <p class="text-xs text-gray-500 mt-1">14-character Ugandan National ID</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">District *</label>
+                    <input type="text" id="district" placeholder="e.g., Kampala" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+            </div>
+            <button onclick="goToStep(2)" class="mt-6 w-full gradient-primary text-white py-4 rounded-xl font-semibold text-lg">Continue to ID Upload →</button>
+        </div>
+
+        <!-- Step 2: ID Document Upload -->
+        <div id="kyc-step-2" class="bg-white rounded-2xl p-6 shadow-sm fade-in" style="display: none;">
+            <h2 class="text-xl font-bold mb-2">Upload ID Document</h2>
+            <p class="text-sm text-gray-600 mb-6">Upload clear photos of your National ID</p>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">ID Card - Front Side *</label>
+                <div class="upload-zone" id="id-front-zone" onclick="document.getElementById('id-front-input').click()">
+                    <input type="file" id="id-front-input" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event, 'front')">
+                    <div id="id-front-placeholder">
+                        <div class="text-5xl mb-3">📷</div>
+                        <p class="font-semibold text-gray-700">Click to take photo or upload</p>
+                    </div>
+                    <div id="id-front-preview" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-3">ID Card - Back Side *</label>
+                <div class="upload-zone" id="id-back-zone" onclick="document.getElementById('id-back-input').click()">
+                    <input type="file" id="id-back-input" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event, 'back')">
+                    <div id="id-back-placeholder">
+                        <div class="text-5xl mb-3">📷</div>
+                        <p class="font-semibold text-gray-700">Click to take photo or upload</p>
+                    </div>
+                    <div id="id-back-preview" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="goToStep(1)" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold">← Back</button>
+                <button onclick="goToStep(3)" id="continue-step-2" class="flex-1 gradient-primary text-white py-4 rounded-xl font-semibold" disabled>Continue →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Selfie -->
+        <div id="kyc-step-3" class="bg-white rounded-2xl p-6 shadow-sm fade-in" style="display: none;">
+            <h2 class="text-xl font-bold mb-2">Take a Selfie</h2>
+            <p class="text-sm text-gray-600 mb-6">Take a clear selfie holding your National ID</p>
+
+            <div class="mb-6">
+                <div class="upload-zone" id="selfie-zone" onclick="document.getElementById('selfie-input').click()">
+                    <input type="file" id="selfie-input" accept="image/*" capture="user" style="display: none;" onchange="handleImageUpload(event, 'selfie')">
+                    <div id="selfie-placeholder">
+                        <div class="text-5xl mb-3">🤳</div>
+                        <p class="font-semibold text-gray-700">Click to take selfie</p>
+                        <p class="text-sm text-gray-500 mt-2">Hold your ID next to your face</p>
+                    </div>
+                    <div id="selfie-preview" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="goToStep(2)" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold">← Back</button>
+                <button onclick="goToStep(4)" id="continue-step-3" class="flex-1 gradient-primary text-white py-4 rounded-xl font-semibold" disabled>Review →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Review & Submit -->
+        <div id="kyc-step-4" class="bg-white rounded-2xl p-6 shadow-sm fade-in" style="display: none;">
+            <h2 class="text-xl font-bold mb-2">Review & Submit</h2>
+            <p class="text-sm text-gray-600 mb-6">Verify all details are correct</p>
+
+            <div class="bg-gray-50 rounded-xl p-4 space-y-2 text-sm mb-6">
+                <div class="flex justify-between"><span class="text-gray-600">Full Name:</span><span class="font-medium" id="review-name">-</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Date of Birth:</span><span class="font-medium" id="review-dob">-</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">National ID:</span><span class="font-medium" id="review-id">-</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">District:</span><span class="font-medium" id="review-district">-</span></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="text-center">
+                    <div class="w-full h-20 bg-gray-100 rounded-lg mb-2 overflow-hidden" id="review-front-img"></div>
+                    <p class="text-xs text-gray-600">ID Front</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-full h-20 bg-gray-100 rounded-lg mb-2 overflow-hidden" id="review-back-img"></div>
+                    <p class="text-xs text-gray-600">ID Back</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-full h-20 bg-gray-100 rounded-lg mb-2 overflow-hidden" id="review-selfie-img"></div>
+                    <p class="text-xs text-gray-600">Selfie</p>
+                </div>
+            </div>
+
+            <label class="flex items-start gap-3 cursor-pointer mb-6">
+                <input type="checkbox" id="consent-checkbox" class="mt-1 w-5 h-5 text-purple-600 rounded">
+                <span class="text-sm text-gray-700">I confirm all information is accurate and consent to identity verification.</span>
+            </label>
+
+            <div class="flex gap-3">
+                <button onclick="goToStep(3)" class="flex-1 bg-gray-100 text-gray-700 py-4 rounded-xl font-semibold">← Back</button>
+                <button onclick="submitKYC()" id="submit-kyc-btn" class="flex-1 bg-green-600 text-white py-4 rounded-xl font-semibold" disabled>Submit ✓</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="success-modal" class="modal">
+    <div class="modal-content text-center">
+        <div class="text-6xl mb-4">✅</div>
+        <h2 class="text-2xl font-bold mb-3">KYC Submitted!</h2>
+        <p class="text-gray-600 mb-6">We'll review your documents and notify you within 24-48 hours.</p>
+        <button onclick="closeSuccessModal()" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold">Done</button>
+    </div>
+</div>
+
+<!-- LOADING MODAL -->
+<div id="loading-modal" class="modal">
+    <div class="modal-content text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <h3 class="text-lg font-semibold">Processing...</h3>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+let targetTier = 2;
+let kycData = { personalInfo: {}, documents: { idFront: null, idBack: null, selfie: null } };
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('consent-checkbox').addEventListener('change', function() {
+        document.getElementById('submit-kyc-btn').disabled = !this.checked;
+    });
+    document.getElementById('national-id').addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+});
+
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+}
+
+function goBack() {
+    window.location.href = 'index.html';
+}
+
+function startKYC(tier) {
+    targetTier = tier;
+    document.getElementById('tier-upgrade-text').textContent = `Upgrading to Tier ${tier}`;
+    showPage('kyc-flow-page');
+    goToStep(1);
+}
+
+function goToStep(stepNumber) {
+    if (stepNumber > currentStep && !validateStep(currentStep)) return;
+
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`kyc-step-${i}`).style.display = 'none';
+        const ind = document.getElementById(`step-${i}-indicator`);
+        ind.classList.remove('active');
+        if (i < stepNumber) ind.classList.add('completed');
+        else ind.classList.remove('completed');
+    }
+
+    document.getElementById(`kyc-step-${stepNumber}`).style.display = 'block';
+    document.getElementById(`step-${stepNumber}-indicator`).classList.add('active');
+    currentStep = stepNumber;
+
+    if (stepNumber === 4) populateReview();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateStep(step) {
+    if (step === 1) {
+        const name = document.getElementById('full-name').value.trim();
+        const dob = document.getElementById('dob').value;
+        const gender = document.getElementById('gender').value;
+        const nid = document.getElementById('national-id').value.trim();
+        const district = document.getElementById('district').value.trim();
+
+        if (!name || name.length < 3) { alert('Enter your full name'); return false; }
+        if (!dob) { alert('Enter date of birth'); return false; }
+        if (!gender) { alert('Select gender'); return false; }
+        if (!nid || nid.length !== 14) { alert('Enter valid 14-character National ID'); return false; }
+        if (!district) { alert('Enter your district'); return false; }
+
+        const age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age < 18) { alert('Must be 18+ years old'); return false; }
+
+        kycData.personalInfo = { fullName: name, dob, gender, nationalId: nid, district };
+        return true;
+    }
+    if (step === 2) {
+        if (!kycData.documents.idFront || !kycData.documents.idBack) { alert('Upload both sides of ID'); return false; }
+        return true;
+    }
+    if (step === 3) {
+        if (!kycData.documents.selfie) { alert('Take a selfie'); return false; }
+        return true;
+    }
+    return true;
+}
+
+function handleImageUpload(event, type) {
+    const file = event.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        kycData.documents[type === 'front' ? 'idFront' : type === 'back' ? 'idBack' : 'selfie'] = e.target.result;
+        displayImage(e.target.result, type === 'selfie' ? 'selfie' : 'id-' + type);
+        if (type === 'front' || type === 'back') checkStep2();
+        if (type === 'selfie') document.getElementById('continue-step-3').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+function displayImage(data, prefix) {
+    document.getElementById(`${prefix}-placeholder`).style.display = 'none';
+    const preview = document.getElementById(`${prefix}-preview`);
+    preview.style.display = 'block';
+    preview.innerHTML = `<img src="${data}" class="preview-image">`;
+}
+
+function checkStep2() {
+    document.getElementById('continue-step-2').disabled = !(kycData.documents.idFront && kycData.documents.idBack);
+}
+
+function populateReview() {
+    document.getElementById('review-name').textContent = kycData.personalInfo.fullName;
+    document.getElementById('review-dob').textContent = kycData.personalInfo.dob;
+    document.getElementById('review-id').textContent = kycData.personalInfo.nationalId;
+    document.getElementById('review-district').textContent = kycData.personalInfo.district;
+    if (kycData.documents.idFront) document.getElementById('review-front-img').innerHTML = `<img src="${kycData.documents.idFront}" class="w-full h-full object-cover">`;
+    if (kycData.documents.idBack) document.getElementById('review-back-img').innerHTML = `<img src="${kycData.documents.idBack}" class="w-full h-full object-cover">`;
+    if (kycData.documents.selfie) document.getElementById('review-selfie-img').innerHTML = `<img src="${kycData.documents.selfie}" class="w-full h-full object-cover">`;
+}
+
+async function submitKYC() {
+    showModal('loading-modal');
+    
+    try {
+        const authToken = localStorage.getItem('gmg_auth_token');
+        if (!authToken) {
+            hideModal('loading-modal');
+            alert('Please login first');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const submissionData = {
+            tier: targetTier,
+            personalInfo: kycData.personalInfo,
+            documents: kycData.documents,
+            timestamp: new Date().toISOString()
+        };
+
+        const response = await fetch('http://localhost:3010/api/kyc/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(submissionData)
+        });
+
+        const result = await response.json();
+        hideModal('loading-modal');
+
+        if (result.success) {
+            localStorage.setItem('gmg_kyc_status', 'pending');
+            showModal('success-modal');
+        } else {
+            alert(result.message || result.error || 'Submission failed');
+        }
+    } catch (error) {
+        hideModal('loading-modal');
+        alert('Connection error: ' + error.message);
+    }
+}
+
+function showModal(id) { document.getElementById(id).classList.add('active'); }
+function hideModal(id) { document.getElementById(id).classList.remove('active'); }
+function closeSuccessModal() { hideModal('success-modal'); window.location.href = 'index.html'; }
+</script>
+</body>
+</html>

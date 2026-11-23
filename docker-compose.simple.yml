@@ -1,0 +1,86 @@
+# GMG Uganda - Simple Docker Compose
+# For single API server deployment (matches actual codebase)
+
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: gmg_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-gmg_secure_password}
+      MYSQL_DATABASE: gmg_uganda
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # CANONICAL_SCHEMA.sql is the single source of truth
+      - ./api/migration/CANONICAL_SCHEMA.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - gmg_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: gmg_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - gmg_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # GMG API Server (single monolithic server)
+  api:
+    build:
+      context: ./api
+      dockerfile: ../Dockerfile.service
+    container_name: gmg_api
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-gmg_secure_password}
+      DB_NAME: gmg_uganda
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-gmg-uganda-jwt-secret-change-in-production-2024}
+      AT_API_KEY: ${AT_API_KEY:-}
+      AT_USERNAME: ${AT_USERNAME:-sandbox}
+      MTN_WEBHOOK_SECRET: ${MTN_WEBHOOK_SECRET:-mtn-secret}
+      AIRTEL_WEBHOOK_SECRET: ${AIRTEL_WEBHOOK_SECRET:-airtel-secret}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - gmg_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mysql_data:
+
+networks:
+  gmg_network:
+    driver: bridge

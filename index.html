@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="GMG Global - Mobile Money & Financial Services. Send money, pay bills, trade forex, crypto & stocks worldwide.">
+    <meta name="keywords" content="mobile money, global, fintech, forex, crypto, stocks, send money, pay bills, trading">
+    <meta name="author" content="GMG Global Limited">
+    <meta name="format-detection" content="telephone=no">
+    
+    <title>GMG Global - Mobile Money & Financial Services</title>
+    
+    <!-- PWA Configuration -->
+    <meta name="theme-color" content="#0066FF">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GMG Global">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="assets/icons/app/icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/app/apple-touch-icon.png">
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <!-- Google Sign-In SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f9fafb;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        
+        /* High Resolution Input Styles */
+        input, select, textarea {
+            font-size: 16px !important;
+            color: #1f2937 !important;
+            background-color: #ffffff !important;
+            border: 2px solid #d1d5db !important;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: #0066FF !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
+            outline: none !important;
+        }
+        input::placeholder {
+            color: #9ca3af !important;
+            opacity: 1 !important;
+        }
+        
+        /* Select dropdown styling */
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            background-position: right 12px center !important;
+            background-repeat: no-repeat !important;
+            background-size: 20px !important;
+            padding-right: 40px !important;
+        }
+        
+        /* Number input - remove spinners */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        
+        /* Button styles */
+        button {
+            font-weight: 600 !important;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .safe-area-top { padding-top: env(safe-area-inset-top); }
+        .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .page { display: none; }
+        .page.active { display: block; }
+        .app-container { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; background: #f9fafb; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: white; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: flex-end; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; width: 100%; max-width: 480px; margin: 0 auto; border-radius: 24px 24px 0 0; padding: 24px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .gradient-primary { background: linear-gradient(135deg, #0066FF 0%, #0044CC 100%); }
+        .gradient-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .kyc-tier { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .tier-0 { background: #fee2e2; color: #991b1b; }
+        .tier-1 { background: #fef3c7; color: #92400e; }
+        .tier-2 { background: #dbeafe; color: #1e40af; }
+        .tier-3 { background: #dcfce7; color: #166534; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .hidden { display: none !important; }
+        .blur-sensitive { filter: blur(8px); transition: filter 0.3s; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* High contrast text */
+        .text-gray-900, h1, h2, h3, h4, h5, h6 { color: #111827 !important; }
+        .text-gray-800 { color: #1f2937 !important; }
+        .text-gray-700 { color: #374151 !important; }
+        .text-gray-600 { color: #4b5563 !important; }
+        
+        /* Country dropdown */
+        #country-dropdown {
+            background: white;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        #country-list button {
+            border-bottom: 1px solid #f3f4f6;
+        }
+        #country-list button:hover {
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- PAGE 1: SPLASH SCREEN -->
+    <div id="splash-page" class="page active">
+        <div class="min-h-screen gradient-primary flex items-center justify-center p-4 safe-area-top safe-area-bottom">
+            <div class="text-center text-white fade-in">
+                <div class="text-8xl mb-6 animate-bounce">🇺🇬</div>
+                <h1 class="text-5xl font-bold mb-2">GMG Global</h1>
+                <p class="text-lg opacity-90 mb-8">Mobile Money & Financial Services</p>
+                <div class="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p class="mt-4 text-sm opacity-75">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 2: LOGIN -->
+    <div id="login-page" class="page">
+        <div class="min-h-screen gradient-primary flex items-center justify-center p-4 safe-area-top safe-area-bottom">
+            <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md fade-in">
+                <div class="text-center mb-8">
+                    <div class="gradient-primary w-20 h-20 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg">
+                        <span class="text-white text-3xl font-bold">G</span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Welcome to GMG Global</h1>
+                    <p class="text-gray-500 mt-1">Sign in to continue</p>
+                </div>
+
+                <!-- Phone Input Step -->
+                <div id="phone-step" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                        <div class="flex">
+                            <!-- Country Selector -->
+                            <button type="button" id="country-selector-btn" onclick="toggleCountryDropdown()" 
+                                    class="inline-flex items-center gap-2 px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-700 font-medium hover:bg-gray-200 transition min-w-[100px]">
+                                <span id="selected-flag">🇺🇬</span>
+                                <span id="selected-dial-code">+256</span>
+                                <span class="text-xs">▼</span>
+                            </button>
+                            <input type="tel" id="phone-number" placeholder="771234567" maxlength="12" inputmode="numeric" autocomplete="tel"
+                                   class="flex-1 px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-gray-900 bg-white">
+                        </div>
+                        <!-- Country Dropdown -->
+                        <div id="country-dropdown" class="hidden absolute z-50 mt-1 w-full max-w-md bg-white border border-gray-300 rounded-xl shadow-xl max-h-64 overflow-hidden">
+                            <div class="p-2 border-b">
+                                <input type="text" id="country-search" placeholder="Search country..." oninput="filterCountries(this.value)"
+                                       class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none">
+                            </div>
+                            <div id="country-list" class="overflow-y-auto max-h-48"></div>
+                        </div>
+                    </div>
+                    <button type="button" id="send-otp-btn" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg active:scale-[0.98] transition-all">
+                        Send OTP
+                    </button>
+                    
+                    <!-- Divider -->
+                    <div class="flex items-center gap-4 my-4">
+                        <div class="flex-1 h-px bg-gray-300"></div>
+                        <span class="text-gray-500 text-sm">or</span>
+                        <div class="flex-1 h-px bg-gray-300"></div>
+                    </div>
+                    
+                    <!-- Social Sign-In Buttons -->
+                    <div class="flex justify-center gap-4">
+                        <!-- Google Sign-In Button Container -->
+                        <div id="google-signin-btn"></div>
+                        
+                        <!-- Apple Sign-In Button -->
+                        <button type="button" onclick="handleAppleSignIn()" 
+                                class="flex items-center justify-center w-12 h-12 bg-black rounded-full hover:bg-gray-800 transition shadow-md">
+                            <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OTP Verification Step -->
+                <div id="otp-step" class="space-y-6 hidden">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Enter 6-Digit OTP</label>
+                        <input type="text" id="otp-code" placeholder="• • • • • •" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                               class="w-full px-4 py-4 border border-gray-300 rounded-xl text-center text-2xl tracking-[0.5em] font-bold focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition text-gray-900 bg-white">
+                        <p class="text-sm text-gray-500 mt-2 text-center">OTP sent to <span id="display-phone" class="font-semibold text-purple-600"></span></p>
+                    </div>
+                    <button type="button" onclick="verifyOTP()" class="w-full gradient-success text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg active:scale-[0.98] transition-all">
+                        Verify & Login
+                    </button>
+                    <button type="button" onclick="backToPhone()" class="w-full text-gray-500 text-sm hover:text-purple-600 transition">
+                        ← Change phone number
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 3: MAIN DASHBOARD -->
+    <div id="mobile-app-page" class="page">
+        <div class="app-container bg-gray-50 pb-24">
+            <!-- Header -->
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-xl font-bold flex items-center gap-2">🇺🇬 GMG Global</h1>
+                        <p class="text-sm opacity-80" id="user-phone-display"></p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="showPage('notifications-page')" class="relative p-2 bg-white/20 rounded-xl hover:bg-white/30 transition" aria-label="Notifications">
+                            🔔<span class="notification-badge" id="notif-badge">0</span>
+                        </button>
+                        <button onclick="showPage('profile-page')" class="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition" aria-label="Profile">👤</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Balance Card -->
+            <section class="mx-4 -mt-2 relative z-10">
+                <div class="gradient-primary text-white p-6 rounded-2xl shadow-xl">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <p class="text-sm opacity-80">Available Balance</p>
+                            <h2 class="text-3xl font-bold mt-1" id="total-balance">UGX 0</h2>
+                        </div>
+                        <button onclick="toggleBalanceVisibility()" class="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition" aria-label="Toggle balance visibility">👁️</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="kyc-tier tier-1" id="kyc-tier">TIER 1</span>
+                        <span class="text-xs opacity-70">Tap to view limits</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-4">
+                        <button onclick="openModal('deposit')" class="bg-white/20 py-3 rounded-xl font-medium hover:bg-white/30 transition flex items-center justify-center gap-2">💵 Deposit</button>
+                        <button onclick="openModal('withdraw')" class="bg-white/20 py-3 rounded-xl font-medium hover:bg-white/30 transition flex items-center justify-center gap-2">💸 Withdraw</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Send & Receive Actions -->
+            <section class="p-4">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Send & Receive</h3>
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="openModal('send')" class="text-center">
+                        <div class="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📤</div>
+                        <span class="text-xs text-gray-600">Send</span>
+                    </button>
+                    <button onclick="openModal('request')" class="text-center">
+                        <div class="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📥</div>
+                        <span class="text-xs text-gray-600">Request</span>
+                    </button>
+                    <button onclick="openModal('bank')" class="text-center">
+                        <div class="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">🏦</div>
+                        <span class="text-xs text-gray-600">Bank</span>
+                    </button>
+                    <button onclick="showPage('qr-page')" class="text-center">
+                        <div class="w-12 h-12 gradient-primary rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📱</div>
+                        <span class="text-xs text-gray-600">QR Code</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Pay Bills Actions -->
+            <section class="p-4 pt-0">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Pay Bills</h3>
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="openModal('airtime')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📱</div>
+                        <span class="text-xs text-gray-600">Airtime</span>
+                    </button>
+                    <button onclick="openModal('data')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📶</div>
+                        <span class="text-xs text-gray-600">Data</span>
+                    </button>
+                    <button onclick="openModal('electricity')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">💡</div>
+                        <span class="text-xs text-gray-600">UMEME</span>
+                    </button>
+                    <button onclick="openModal('tv')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📺</div>
+                        <span class="text-xs text-gray-600">TV</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Financial Services -->
+            <section class="p-4 pt-0">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Financial Services</h3>
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="openModal('exchange')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">💱</div>
+                        <span class="text-xs text-gray-600">Exchange</span>
+                    </button>
+                    <button onclick="openModal('savings')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">🏦</div>
+                        <span class="text-xs text-gray-600">Savings</span>
+                    </button>
+                    <button onclick="openModal('loans')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">💰</div>
+                        <span class="text-xs text-gray-600">Loans</span>
+                    </button>
+                    <button onclick="openModal('insurance')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">🛡️</div>
+                        <span class="text-xs text-gray-600">Insurance</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Trading & Investments -->
+            <section class="p-4 pt-0">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Trading & Investments</h3>
+                    <button onclick="showPage('trading-page')" class="text-purple-600 text-sm font-medium">View All →</button>
+                </div>
+                <div class="grid grid-cols-4 gap-3">
+                    <button onclick="showPage('forex-page')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📈</div>
+                        <span class="text-xs text-gray-600">Forex</span>
+                    </button>
+                    <button onclick="showPage('stocks-page')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">📊</div>
+                        <span class="text-xs text-gray-600">Stocks</span>
+                    </button>
+                    <button onclick="showPage('crypto-trading-page')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">₿</div>
+                        <span class="text-xs text-gray-600">Crypto</span>
+                    </button>
+                    <button onclick="showPage('commodities-page')" class="text-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center text-xl mx-auto mb-2 shadow-md">🥇</div>
+                        <span class="text-xs text-gray-600">Gold</span>
+                    </button>
+                </div>
+                <!-- Live Market Ticker -->
+                <div class="mt-4 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-3 overflow-hidden">
+                    <div id="market-ticker" class="flex gap-6 animate-marquee whitespace-nowrap text-sm">
+                        <span class="text-green-400">BTC $67,234 <span class="text-xs">+2.4%</span></span>
+                        <span class="text-red-400">ETH $3,456 <span class="text-xs">-1.2%</span></span>
+                        <span class="text-green-400">EUR/USD 1.0876 <span class="text-xs">+0.3%</span></span>
+                        <span class="text-green-400">AAPL $189.45 <span class="text-xs">+1.1%</span></span>
+                        <span class="text-red-400">GOLD $2,034 <span class="text-xs">-0.5%</span></span>
+                        <span class="text-green-400">USD/UGX 3,750 <span class="text-xs">+0.1%</span></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Transactions -->
+            <section class="p-4 pt-0">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Recent Transactions</h3>
+                    <button onclick="showPage('history-page')" class="text-purple-600 text-sm font-medium">View All →</button>
+                </div>
+                <div id="transactions-list" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">📋</div>
+                        <p>No transactions yet</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Navigation -->
+            <nav class="bottom-nav flex justify-around py-2 safe-area-bottom">
+                <button onclick="showPage('mobile-app-page')" class="nav-item flex flex-col items-center p-2 text-purple-600">
+                    <span class="text-xl">🏠</span><span class="text-xs mt-1 font-medium">Home</span>
+                </button>
+                <button onclick="openModal('send')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">💸</span><span class="text-xs mt-1">Send</span>
+                </button>
+                <button onclick="showPage('history-page')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">📊</span><span class="text-xs mt-1">History</span>
+                </button>
+                <button onclick="showCardsPage()" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">💳</span><span class="text-xs mt-1">Cards</span>
+                </button>
+                <button onclick="showPage('more-page')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">⚙️</span><span class="text-xs mt-1">More</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- PAGE 4: TRANSACTION HISTORY -->
+    <div id="history-page" class="page">
+        <div class="app-container bg-gray-50 min-h-screen pb-24">
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('mobile-app-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">Transaction History</h1>
+                </div>
+            </header>
+            <div class="p-4">
+                <!-- Filters -->
+                <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <button onclick="filterTransactions('all')" class="px-4 py-2 bg-purple-600 text-white rounded-full text-sm whitespace-nowrap" id="filter-all">All</button>
+                    <button onclick="filterTransactions('CREDIT')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm whitespace-nowrap" id="filter-credit">Received</button>
+                    <button onclick="filterTransactions('DEBIT')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm whitespace-nowrap" id="filter-debit">Sent</button>
+                    <button onclick="filterTransactions('DEPOSIT')" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm whitespace-nowrap" id="filter-deposit">Deposits</button>
+                </div>
+                <!-- Transaction List -->
+                <div id="history-transactions-list" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">📋</div>
+                        <p>Loading transactions...</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="bottom-nav flex justify-around py-2 safe-area-bottom">
+                <button onclick="showPage('mobile-app-page')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">🏠</span><span class="text-xs mt-1">Home</span>
+                </button>
+                <button onclick="openModal('send')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">💸</span><span class="text-xs mt-1">Send</span>
+                </button>
+                <button onclick="showPage('history-page')" class="nav-item flex flex-col items-center p-2 text-purple-600">
+                    <span class="text-xl">📊</span><span class="text-xs mt-1 font-medium">History</span>
+                </button>
+                <button onclick="showCardsPage()" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">💳</span><span class="text-xs mt-1">Cards</span>
+                </button>
+                <button onclick="showPage('more-page')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">⚙️</span><span class="text-xs mt-1">More</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- PAGE 5: NOTIFICATIONS -->
+    <div id="notifications-page" class="page">
+        <div class="app-container bg-gray-50 min-h-screen pb-24">
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('mobile-app-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">Notifications</h1>
+                </div>
+            </header>
+            <div class="p-4">
+                <div id="notifications-list" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">🔔</div>
+                        <p>No notifications yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 6: PROFILE -->
+    <div id="profile-page" class="page">
+        <div class="app-container bg-gray-50 min-h-screen pb-24">
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('mobile-app-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">My Profile</h1>
+                </div>
+            </header>
+            <div class="p-4">
+                <!-- Profile Card -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm mb-4">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-16 h-16 gradient-primary rounded-full flex items-center justify-center text-2xl text-white">👤</div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-800" id="profile-name">GMG User</h2>
+                            <p class="text-gray-500" id="profile-phone"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between py-3 border-t">
+                        <span class="text-gray-600">KYC Status</span>
+                        <span class="kyc-tier tier-1" id="profile-kyc-tier">TIER 1</span>
+                    </div>
+                </div>
+                <!-- Menu Items -->
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <button onclick="window.location.href='kyc.html'" class="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">📄</span> Verify Identity (KYC)</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                    <button onclick="openModal('change-pin')" class="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">🔐</span> Change PIN</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                    <button onclick="showPage('security-page')" class="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">🛡️</span> Security Settings</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                    <button onclick="logout()" class="w-full flex items-center justify-between p-4 text-red-600 hover:bg-red-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">🚪</span> Logout</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 7: QR CODE -->
+    <div id="qr-page" class="page">
+        <div class="app-container bg-gray-50 min-h-screen pb-24">
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('mobile-app-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">QR Code</h1>
+                </div>
+            </header>
+            <div class="p-4">
+                <div class="bg-white rounded-2xl p-6 shadow-sm text-center">
+                    <p class="text-gray-600 mb-4">Scan to pay me</p>
+                    <div id="qr-code" class="flex justify-center mb-4"></div>
+                    <p class="text-sm text-gray-500" id="qr-phone"></p>
+                </div>
+                <div class="mt-4">
+                    <button onclick="openModal('scan-qr')" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold">📷 Scan QR Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 8: MORE/SETTINGS -->
+    <div id="more-page" class="page">
+        <div class="app-container bg-gray-50 min-h-screen pb-24">
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('mobile-app-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">More</h1>
+                </div>
+            </header>
+            <div class="p-4 space-y-4">
+                <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <button onclick="showPage('profile-page')" class="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">👤</span> My Profile</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                    <button onclick="showPage('beneficiaries-page')" class="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">👥</span> Saved Beneficiaries</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                    <button onclick="showPage('limits-page')" class="w-full flex items-center justify-between p-4 border-b hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">📊</span> Transaction Limits</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                    <button onclick="showPage('help-page')" class="w-full flex items-center justify-between p-4 hover:bg-gray-50">
+                        <span class="flex items-center gap-3"><span class="text-xl">❓</span> Help & Support</span>
+                        <span class="text-gray-400">→</span>
+                    </button>
+                </div>
+                <div class="text-center text-gray-400 text-sm mt-8">
+                    <p>GMG Global v1.0.0</p>
+                    <p>© 2025 GMG Global Limited. All rights reserved.</p>
+                </div>
+            </div>
+            <nav class="bottom-nav flex justify-around py-2 safe-area-bottom">
+                <button onclick="showPage('mobile-app-page')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">🏠</span><span class="text-xs mt-1">Home</span>
+                </button>
+                <button onclick="openModal('send')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">💸</span><span class="text-xs mt-1">Send</span>
+                </button>
+                <button onclick="showPage('history-page')" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">📊</span><span class="text-xs mt-1">History</span>
+                </button>
+                <button onclick="showCardsPage()" class="nav-item flex flex-col items-center p-2 text-gray-500">
+                    <span class="text-xl">💳</span><span class="text-xs mt-1">Cards</span>
+                </button>
+                <button onclick="showPage('more-page')" class="nav-item flex flex-col items-center p-2 text-purple-600">
+                    <span class="text-xl">⚙️</span><span class="text-xs mt-1 font-medium">More</span>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- PAGE 9: BENEFICIARIES -->
+    <div id="beneficiaries-page" class="page">
+        <div class="app-container bg-gray-50 min-h-screen pb-24">
+            <header class="gradient-primary text-white p-5 safe-area-top">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="showPage('more-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                        <h1 class="text-xl font-bold">Beneficiaries</h1>
+                    </div>
+                    <button onclick="addNewBeneficiary()" class="p-2 bg-white/20 rounded-xl">➕</button>
+                </div>
+            </header>
+            <div class="p-4">
+                <div id="beneficiaries-list" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-2">👥</div>
+                        <p>No saved beneficiaries</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TRADING & INVESTMENTS PAGES
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- TRADING HUB PAGE -->
+    <div id="trading-page" class="page">
+        <div class="app-container bg-gray-900 min-h-screen pb-24">
+            <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('mobile-app-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">Trading Hub</h1>
+                </div>
+            </header>
+            
+            <!-- Trading Portfolio Summary -->
+            <div class="p-4">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-5 text-white mb-4">
+                    <p class="text-sm opacity-80">Total Portfolio Value</p>
+                    <h2 class="text-3xl font-bold mt-1" id="portfolio-value">$0.00</h2>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-green-300 text-sm" id="portfolio-change">+$0.00 (0.00%)</span>
+                        <span class="text-xs opacity-70">24h</span>
+                    </div>
+                </div>
+
+                <!-- Trading Categories -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button onclick="showPage('forex-page')" class="bg-gray-800 p-4 rounded-xl text-left hover:bg-gray-700 transition">
+                        <div class="text-2xl mb-2">📈</div>
+                        <h3 class="text-white font-bold">Forex</h3>
+                        <p class="text-gray-400 text-xs">Trade currency pairs</p>
+                    </button>
+                    <button onclick="showPage('stocks-page')" class="bg-gray-800 p-4 rounded-xl text-left hover:bg-gray-700 transition">
+                        <div class="text-2xl mb-2">📊</div>
+                        <h3 class="text-white font-bold">Stocks</h3>
+                        <p class="text-gray-400 text-xs">US & Global stocks</p>
+                    </button>
+                    <button onclick="showPage('crypto-trading-page')" class="bg-gray-800 p-4 rounded-xl text-left hover:bg-gray-700 transition">
+                        <div class="text-2xl mb-2">₿</div>
+                        <h3 class="text-white font-bold">Crypto</h3>
+                        <p class="text-gray-400 text-xs">Bitcoin, Ethereum & more</p>
+                    </button>
+                    <button onclick="showPage('commodities-page')" class="bg-gray-800 p-4 rounded-xl text-left hover:bg-gray-700 transition">
+                        <div class="text-2xl mb-2">🥇</div>
+                        <h3 class="text-white font-bold">Commodities</h3>
+                        <p class="text-gray-400 text-xs">Gold, Silver, Oil</p>
+                    </button>
+                </div>
+
+                <!-- Open Positions -->
+                <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-white font-bold">Open Positions</h3>
+                        <span class="text-gray-400 text-sm" id="positions-count">0 positions</span>
+                    </div>
+                    <div id="open-positions-list" class="space-y-2">
+                        <div class="text-center text-gray-500 py-4">
+                            <p class="text-sm">No open positions</p>
+                            <p class="text-xs mt-1">Start trading to see your positions here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Trades -->
+                <div class="bg-gray-800 rounded-xl p-4">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-white font-bold">Recent Trades</h3>
+                        <button onclick="showPage('trade-history-page')" class="text-purple-400 text-sm">View All →</button>
+                    </div>
+                    <div id="recent-trades-list" class="space-y-2">
+                        <div class="text-center text-gray-500 py-4">
+                            <p class="text-sm">No recent trades</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOREX TRADING PAGE -->
+    <div id="forex-page" class="page">
+        <div class="app-container bg-gray-900 min-h-screen pb-24">
+            <header class="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-5 safe-area-top">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="showPage('trading-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                        <h1 class="text-xl font-bold">Forex Trading</h1>
+                    </div>
+                    <button onclick="openModal('forex-order')" class="bg-white/20 px-4 py-2 rounded-xl text-sm font-medium">+ New Trade</button>
+                </div>
+            </header>
+            
+            <div class="p-4">
+                <!-- Forex Balance -->
+                <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400 text-sm">Forex Balance</p>
+                            <h2 class="text-2xl font-bold text-white" id="forex-balance">$0.00</h2>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openModal('forex-deposit')" class="bg-green-600 px-3 py-2 rounded-lg text-white text-sm">Deposit</button>
+                            <button onclick="openModal('forex-withdraw')" class="bg-gray-700 px-3 py-2 rounded-lg text-white text-sm">Withdraw</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Currency Pairs -->
+                <h3 class="text-white font-bold mb-3">Popular Pairs</h3>
+                <div id="forex-pairs-list" class="space-y-2 mb-4">
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectPair('EUR/USD')">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🇪🇺🇺🇸</span>
+                            <div>
+                                <div class="text-white font-bold">EUR/USD</div>
+                                <div class="text-gray-400 text-xs">Euro / US Dollar</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">1.0876</div>
+                            <div class="text-green-400 text-xs">+0.32%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectPair('GBP/USD')">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🇬🇧🇺🇸</span>
+                            <div>
+                                <div class="text-white font-bold">GBP/USD</div>
+                                <div class="text-gray-400 text-xs">British Pound / US Dollar</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">1.2654</div>
+                            <div class="text-red-400 text-xs">-0.15%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectPair('USD/JPY')">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🇺🇸🇯🇵</span>
+                            <div>
+                                <div class="text-white font-bold">USD/JPY</div>
+                                <div class="text-gray-400 text-xs">US Dollar / Japanese Yen</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">149.85</div>
+                            <div class="text-green-400 text-xs">+0.45%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectPair('USD/UGX')">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🇺🇸🇺🇬</span>
+                            <div>
+                                <div class="text-white font-bold">USD/UGX</div>
+                                <div class="text-gray-400 text-xs">US Dollar / Uganda Shilling</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">3,750</div>
+                            <div class="text-green-400 text-xs">+0.08%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STOCKS TRADING PAGE -->
+    <div id="stocks-page" class="page">
+        <div class="app-container bg-gray-900 min-h-screen pb-24">
+            <header class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-5 safe-area-top">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="showPage('trading-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                        <h1 class="text-xl font-bold">Stock Trading</h1>
+                    </div>
+                    <button onclick="openModal('stock-search')" class="bg-white/20 px-4 py-2 rounded-xl text-sm font-medium">🔍 Search</button>
+                </div>
+            </header>
+            
+            <div class="p-4">
+                <!-- Stocks Balance -->
+                <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400 text-sm">Stocks Portfolio</p>
+                            <h2 class="text-2xl font-bold text-white" id="stocks-balance">$0.00</h2>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openModal('stocks-deposit')" class="bg-blue-600 px-3 py-2 rounded-lg text-white text-sm">Fund</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Indices -->
+                <h3 class="text-white font-bold mb-3">Market Indices</h3>
+                <div class="flex gap-2 overflow-x-auto pb-2 mb-4">
+                    <div class="bg-gray-800 p-3 rounded-xl min-w-[140px]">
+                        <div class="text-gray-400 text-xs">S&P 500</div>
+                        <div class="text-white font-bold">5,234.18</div>
+                        <div class="text-green-400 text-xs">+0.82%</div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl min-w-[140px]">
+                        <div class="text-gray-400 text-xs">NASDAQ</div>
+                        <div class="text-white font-bold">16,428.82</div>
+                        <div class="text-green-400 text-xs">+1.24%</div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl min-w-[140px]">
+                        <div class="text-gray-400 text-xs">DOW JONES</div>
+                        <div class="text-white font-bold">39,512.84</div>
+                        <div class="text-red-400 text-xs">-0.12%</div>
+                    </div>
+                </div>
+
+                <!-- Popular Stocks -->
+                <h3 class="text-white font-bold mb-3">Popular Stocks</h3>
+                <div id="stocks-list" class="space-y-2">
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectStock('AAPL')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-xl">🍎</div>
+                            <div>
+                                <div class="text-white font-bold">AAPL</div>
+                                <div class="text-gray-400 text-xs">Apple Inc.</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$189.45</div>
+                            <div class="text-green-400 text-xs">+1.12%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectStock('GOOGL')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-xl">🔍</div>
+                            <div>
+                                <div class="text-white font-bold">GOOGL</div>
+                                <div class="text-gray-400 text-xs">Alphabet Inc.</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$175.23</div>
+                            <div class="text-green-400 text-xs">+0.87%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectStock('TSLA')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-xl">⚡</div>
+                            <div>
+                                <div class="text-white font-bold">TSLA</div>
+                                <div class="text-gray-400 text-xs">Tesla Inc.</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$248.50</div>
+                            <div class="text-red-400 text-xs">-2.34%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectStock('MSFT')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-xl">🪟</div>
+                            <div>
+                                <div class="text-white font-bold">MSFT</div>
+                                <div class="text-gray-400 text-xs">Microsoft Corp.</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$425.22</div>
+                            <div class="text-green-400 text-xs">+0.65%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRYPTO TRADING PAGE -->
+    <div id="crypto-trading-page" class="page">
+        <div class="app-container bg-gray-900 min-h-screen pb-24">
+            <header class="bg-gradient-to-r from-orange-500 to-yellow-500 text-white p-5 safe-area-top">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <button onclick="showPage('trading-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                        <h1 class="text-xl font-bold">Crypto Trading</h1>
+                    </div>
+                    <button onclick="showPage('crypto-wallet-page')" class="bg-white/20 px-4 py-2 rounded-xl text-sm font-medium">💼 Wallet</button>
+                </div>
+            </header>
+            
+            <div class="p-4">
+                <!-- Crypto Balance -->
+                <div class="bg-gray-800 rounded-xl p-4 mb-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-400 text-sm">Crypto Portfolio</p>
+                            <h2 class="text-2xl font-bold text-white" id="crypto-balance">$0.00</h2>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openModal('crypto-buy')" class="bg-green-600 px-3 py-2 rounded-lg text-white text-sm">Buy</button>
+                            <button onclick="openModal('crypto-sell')" class="bg-red-600 px-3 py-2 rounded-lg text-white text-sm">Sell</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Cryptocurrencies -->
+                <h3 class="text-white font-bold mb-3">Top Cryptocurrencies</h3>
+                <div id="crypto-list" class="space-y-2">
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCrypto('BTC')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-xl">₿</div>
+                            <div>
+                                <div class="text-white font-bold">BTC</div>
+                                <div class="text-gray-400 text-xs">Bitcoin</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$67,234.50</div>
+                            <div class="text-green-400 text-xs">+2.45%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCrypto('ETH')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-xl">Ξ</div>
+                            <div>
+                                <div class="text-white font-bold">ETH</div>
+                                <div class="text-gray-400 text-xs">Ethereum</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$3,456.78</div>
+                            <div class="text-red-400 text-xs">-1.23%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCrypto('BNB')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-xl font-bold text-black">B</div>
+                            <div>
+                                <div class="text-white font-bold">BNB</div>
+                                <div class="text-gray-400 text-xs">Binance Coin</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$598.45</div>
+                            <div class="text-green-400 text-xs">+0.87%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCrypto('SOL')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-xl">◎</div>
+                            <div>
+                                <div class="text-white font-bold">SOL</div>
+                                <div class="text-gray-400 text-xs">Solana</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$178.92</div>
+                            <div class="text-green-400 text-xs">+5.67%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCrypto('USDT')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-xl font-bold">₮</div>
+                            <div>
+                                <div class="text-white font-bold">USDT</div>
+                                <div class="text-gray-400 text-xs">Tether</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$1.00</div>
+                            <div class="text-gray-400 text-xs">0.00%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMODITIES PAGE -->
+    <div id="commodities-page" class="page">
+        <div class="app-container bg-gray-900 min-h-screen pb-24">
+            <header class="bg-gradient-to-r from-yellow-600 to-amber-600 text-white p-5 safe-area-top">
+                <div class="flex items-center gap-4">
+                    <button onclick="showPage('trading-page')" class="p-2 bg-white/20 rounded-xl">←</button>
+                    <h1 class="text-xl font-bold">Commodities</h1>
+                </div>
+            </header>
+            
+            <div class="p-4">
+                <!-- Commodities List -->
+                <h3 class="text-white font-bold mb-3">Precious Metals</h3>
+                <div class="space-y-2 mb-4">
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCommodity('GOLD')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-xl">🥇</div>
+                            <div>
+                                <div class="text-white font-bold">GOLD</div>
+                                <div class="text-gray-400 text-xs">Gold (XAU/USD)</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$2,034.50</div>
+                            <div class="text-red-400 text-xs">-0.45%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCommodity('SILVER')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-400 rounded-full flex items-center justify-center text-xl">🥈</div>
+                            <div>
+                                <div class="text-white font-bold">SILVER</div>
+                                <div class="text-gray-400 text-xs">Silver (XAG/USD)</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$23.45</div>
+                            <div class="text-green-400 text-xs">+0.32%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="text-white font-bold mb-3">Energy</h3>
+                <div class="space-y-2">
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCommodity('OIL')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-xl">🛢️</div>
+                            <div>
+                                <div class="text-white font-bold">CRUDE OIL</div>
+                                <div class="text-gray-400 text-xs">WTI Crude</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$78.45</div>
+                            <div class="text-green-400 text-xs">+1.23%</div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center" onclick="Trading.selectCommodity('NATGAS')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-xl">🔥</div>
+                            <div>
+                                <div class="text-white font-bold">NATURAL GAS</div>
+                                <div class="text-gray-400 text-xs">Henry Hub</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-bold">$2.89</div>
+                            <div class="text-red-400 text-xs">-2.15%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         MODALS
+         ═══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- SEND MONEY MODAL -->
+    <div id="send-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Send Money</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Recipient Phone</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-600">+256</span>
+                        <input type="tel" id="send-recipient" placeholder="771234567" maxlength="9" oninput="searchRecipient()"
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                    <div id="recipient-info" class="mt-1"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="send-amount" placeholder="10,000" min="1000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                    <input type="text" id="send-description" placeholder="What's this for?" maxlength="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="send-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processSendMoney()" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold text-lg">
+                    Send Money
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DEPOSIT MODAL -->
+    <div id="deposit-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Deposit Money</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                    <select id="deposit-method" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="MTN">MTN Mobile Money</option>
+                        <option value="AIRTEL">Airtel Money</option>
+                        <option value="AFRICELL">Africell Money</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="deposit-amount" placeholder="50,000" min="1000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Money Phone</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-600">+256</span>
+                        <input type="tel" id="deposit-phone" placeholder="771234567" maxlength="9"
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800">
+                    <p class="font-semibold mb-1">How it works:</p>
+                    <p>1. Enter amount and confirm</p>
+                    <p>2. You'll receive a prompt on your phone</p>
+                    <p>3. Enter your Mobile Money PIN to complete</p>
+                </div>
+                <button onclick="processDeposit()" class="w-full gradient-success text-white py-4 rounded-xl font-semibold text-lg">
+                    Deposit Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WITHDRAW MODAL -->
+    <div id="withdraw-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Withdraw Money</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="withdraw-amount" placeholder="50,000" min="1000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                    <input type="text" id="withdraw-description" placeholder="Withdrawal reason" maxlength="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="withdraw-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processWithdraw()" class="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white py-4 rounded-xl font-semibold text-lg">
+                    Withdraw
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AIRTIME MODAL -->
+    <div id="airtime-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Buy Airtime</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Network</label>
+                    <select id="airtime-network" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="MTN">MTN Uganda</option>
+                        <option value="AIRTEL">Airtel Uganda</option>
+                        <option value="AFRICELL">Africell Uganda</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-600">+256</span>
+                        <input type="tel" id="airtime-phone" placeholder="771234567" maxlength="9"
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <div class="grid grid-cols-4 gap-2 mb-2">
+                        <button onclick="setAirtimeAmount(1000)" class="py-2 bg-gray-100 rounded-lg text-sm hover:bg-purple-100">1,000</button>
+                        <button onclick="setAirtimeAmount(2000)" class="py-2 bg-gray-100 rounded-lg text-sm hover:bg-purple-100">2,000</button>
+                        <button onclick="setAirtimeAmount(5000)" class="py-2 bg-gray-100 rounded-lg text-sm hover:bg-purple-100">5,000</button>
+                        <button onclick="setAirtimeAmount(10000)" class="py-2 bg-gray-100 rounded-lg text-sm hover:bg-purple-100">10,000</button>
+                    </div>
+                    <input type="number" id="airtime-amount" placeholder="Custom amount" min="500" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="airtime-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processBuyAirtime()" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-semibold text-lg">
+                    Buy Airtime
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA BUNDLE MODAL -->
+    <div id="data-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Buy Data Bundle</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Network</label>
+                    <select id="data-network" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="MTN">MTN Uganda</option>
+                        <option value="AIRTEL">Airtel Uganda</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-600">+256</span>
+                        <input type="tel" id="data-phone" placeholder="771234567" maxlength="9"
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Bundle</label>
+                    <select id="data-bundle" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="1000">Daily 40MB - UGX 1,000</option>
+                        <option value="2000">Daily 100MB - UGX 2,000</option>
+                        <option value="5000">Weekly 500MB - UGX 5,000</option>
+                        <option value="10000">Weekly 1GB - UGX 10,000</option>
+                        <option value="20000">Monthly 2GB - UGX 20,000</option>
+                        <option value="50000">Monthly 6GB - UGX 50,000</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="data-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processBuyData()" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-semibold text-lg">
+                    Buy Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ELECTRICITY (UMEME) MODAL -->
+    <div id="electricity-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Pay UMEME</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Meter Number</label>
+                    <input type="text" id="umeme-meter" placeholder="Enter meter number" maxlength="20"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="umeme-amount" placeholder="20,000" min="1000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="umeme-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processPayBill('UMEME')" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-semibold text-lg">
+                    Pay UMEME
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TV SUBSCRIPTION MODAL -->
+    <div id="tv-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Pay TV Subscription</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Provider</label>
+                    <select id="tv-provider" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="DSTV">DStv</option>
+                        <option value="GOTV">GOtv</option>
+                        <option value="STARTIMES">StarTimes</option>
+                        <option value="AZAM">Azam TV</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Smart Card / Decoder Number</label>
+                    <input type="text" id="tv-card" placeholder="Enter card number" maxlength="20"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="tv-amount" placeholder="50,000" min="5000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="tv-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processPayBill('TV')" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-semibold text-lg">
+                    Pay Subscription
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REQUEST MONEY MODAL -->
+    <div id="request-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Request Money</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Request From</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-600">+256</span>
+                        <input type="tel" id="request-from" placeholder="771234567" maxlength="9"
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="request-amount" placeholder="10,000" min="1000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason (Optional)</label>
+                    <input type="text" id="request-reason" placeholder="What's this for?" maxlength="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <button onclick="processRequestMoney()" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold text-lg">
+                    Send Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BANK TRANSFER MODAL -->
+    <div id="bank-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Bank Transfer</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Bank</label>
+                    <select id="bank-name" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white">
+                        <option value="">Select Bank</option>
+                        <option value="STANBIC">Stanbic Bank</option>
+                        <option value="DFCU">dfcu Bank</option>
+                        <option value="CENTENARY">Centenary Bank</option>
+                        <option value="EQUITY">Equity Bank</option>
+                        <option value="ABSA">Absa Bank</option>
+                        <option value="BOA">Bank of Africa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                    <input type="text" id="bank-account" placeholder="Enter account number" maxlength="20"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Name</label>
+                    <input type="text" id="bank-account-name" placeholder="Account holder name" maxlength="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (UGX)</label>
+                    <input type="number" id="bank-amount" placeholder="100,000" min="10000" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Enter PIN</label>
+                    <input type="password" id="bank-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processBankTransfer()" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold text-lg">
+                    Transfer to Bank
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CURRENCY EXCHANGE MODAL -->
+    <div id="exchange-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">💱 Currency Exchange</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">From Currency</label>
+                    <select id="exchange-from" onchange="updateExchangeRate()" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="UGX">🇺🇬 UGX - Ugandan Shilling</option>
+                        <option value="KES">🇰🇪 KES - Kenyan Shilling</option>
+                        <option value="TZS">🇹🇿 TZS - Tanzanian Shilling</option>
+                        <option value="RWF">🇷🇼 RWF - Rwandan Franc</option>
+                        <option value="NGN">🇳🇬 NGN - Nigerian Naira</option>
+                        <option value="USD">🇺🇸 USD - US Dollar</option>
+                        <option value="EUR">🇪🇺 EUR - Euro</option>
+                        <option value="GBP">🇬🇧 GBP - British Pound</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <input type="number" id="exchange-amount" placeholder="Enter amount" min="1" oninput="calculateExchange()"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-900 bg-white">
+                </div>
+                <div class="flex items-center justify-center py-2">
+                    <button onclick="swapCurrencies()" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">🔄</button>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">To Currency</label>
+                    <select id="exchange-to" onchange="updateExchangeRate()" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="USD">🇺🇸 USD - US Dollar</option>
+                        <option value="UGX">🇺🇬 UGX - Ugandan Shilling</option>
+                        <option value="KES">🇰🇪 KES - Kenyan Shilling</option>
+                        <option value="TZS">🇹🇿 TZS - Tanzanian Shilling</option>
+                        <option value="RWF">🇷🇼 RWF - Rwandan Franc</option>
+                        <option value="NGN">🇳🇬 NGN - Nigerian Naira</option>
+                        <option value="EUR">🇪🇺 EUR - Euro</option>
+                        <option value="GBP">🇬🇧 GBP - British Pound</option>
+                    </select>
+                </div>
+                <div class="bg-blue-50 rounded-xl p-4">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">Exchange Rate:</span>
+                        <span class="font-semibold" id="exchange-rate-display">1 UGX = 0.00027 USD</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">Fee (1.5%):</span>
+                        <span class="font-semibold" id="exchange-fee-display">0</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-bold text-blue-800 pt-2 border-t border-blue-200">
+                        <span>You'll Receive:</span>
+                        <span id="exchange-result-display">0.00</span>
+                    </div>
+                </div>
+                <button onclick="processExchange()" class="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition">
+                    Exchange Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVINGS MODAL -->
+    <div id="savings-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Savings</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="text-center py-8">
+                <div class="text-6xl mb-4">🏦</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Coming Soon!</h3>
+                <p class="text-gray-500">Save money and earn interest with GMG Savings. This feature will be available soon.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOANS MODAL -->
+    <div id="loans-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Loans</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="text-center py-8">
+                <div class="text-6xl mb-4">💰</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Coming Soon!</h3>
+                <p class="text-gray-500">Get instant loans based on your transaction history. This feature will be available soon.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- INSURANCE MODAL -->
+    <div id="insurance-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Insurance</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="text-center py-8">
+                <div class="text-6xl mb-4">🛡️</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Coming Soon!</h3>
+                <p class="text-gray-500">Protect yourself and your loved ones with micro-insurance. This feature will be available soon.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE PIN MODAL -->
+    <div id="change-pin-modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Change PIN</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Current PIN</label>
+                    <input type="password" id="current-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">New PIN</label>
+                    <input type="password" id="new-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New PIN</label>
+                    <input type="password" id="confirm-pin" placeholder="••••••" maxlength="6" inputmode="numeric"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none text-center tracking-widest">
+                </div>
+                <button onclick="processChangePin()" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold text-lg">
+                    Change PIN
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="assets/js/african-countries.js"></script>
+    <script src="assets/js/gmg-api-client.js"></script>
+    <script src="assets/js/production-app.js"></script>
+    <script src="assets/js/dashboard-enhanced.js"></script>
+    <script src="assets/js/countries.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/trading.js"></script>
+    <script></script>
+        // Country Selector Functions
+        function toggleCountryDropdown() {
+            const dropdown = document.getElementById('country-dropdown');
+            dropdown.classList.toggle('hidden');
+            if (!dropdown.classList.contains('hidden')) {
+                document.getElementById('country-search').focus();
+                renderCountryList(africanCountries);
+            }
+        }
+
+        function filterCountries(searchTerm) {
+            const filtered = searchCountries(searchTerm);
+            renderCountryList(filtered);
+        }
+
+        function renderCountryList(countries) {
+            const list = document.getElementById('country-list');
+            list.innerHTML = countries.map(c => `
+                <button type="button" onclick="selectCountry('${c.code}')" 
+                        class="w-full flex items-center gap-3 px-4 py-3 hover:bg-purple-50 transition text-left">
+                    <span class="text-xl">${c.flag}</span>
+                    <span class="flex-1 text-gray-800">${c.name}</span>
+                    <span class="text-gray-500 text-sm">${c.dialCode}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectCountry(code) {
+            const country = setSelectedCountry(code);
+            if (country) {
+                document.getElementById('selected-flag').textContent = country.flag;
+                document.getElementById('selected-dial-code').textContent = country.dialCode;
+                document.getElementById('country-dropdown').classList.add('hidden');
+                document.getElementById('phone-number').focus();
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('country-dropdown');
+            const btn = document.getElementById('country-selector-btn');
+            if (dropdown && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Initialize country list on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCountryList(africanCountries);
+        });
+    </script>
+    <script>
+        // Currency Exchange Functions
+        const exchangeRates = {
+            'USD': 1.0, 'UGX': 3750, 'KES': 153, 'TZS': 2500,
+            'RWF': 1250, 'NGN': 1550, 'GHS': 15, 'ZAR': 18.5,
+            'EUR': 0.92, 'GBP': 0.79
+        };
+
+        function getExchangeRate(from, to) {
+            return exchangeRates[to] / exchangeRates[from];
+        }
+
+        function updateExchangeRate() {
+            const from = document.getElementById('exchange-from').value;
+            const to = document.getElementById('exchange-to').value;
+            const rate = getExchangeRate(from, to);
+            document.getElementById('exchange-rate-display').textContent = `1 ${from} = ${rate.toFixed(6)} ${to}`;
+            calculateExchange();
+        }
+
+        function calculateExchange() {
+            const from = document.getElementById('exchange-from').value;
+            const to = document.getElementById('exchange-to').value;
+            const amount = parseFloat(document.getElementById('exchange-amount').value) || 0;
+            const rate = getExchangeRate(from, to);
+            const converted = amount * rate;
+            const fee = amount * 0.015;
+            const feeInTarget = fee * rate;
+            const result = converted - feeInTarget;
+            
+            document.getElementById('exchange-fee-display').textContent = `${fee.toFixed(2)} ${from}`;
+            document.getElementById('exchange-result-display').textContent = `${result.toFixed(2)} ${to}`;
+        }
+
+        function swapCurrencies() {
+            const fromSelect = document.getElementById('exchange-from');
+            const toSelect = document.getElementById('exchange-to');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            updateExchangeRate();
+        }
+
+        async function processExchange() {
+            const from = document.getElementById('exchange-from').value;
+            const to = document.getElementById('exchange-to').value;
+            const amount = parseFloat(document.getElementById('exchange-amount').value);
+            
+            if (!amount || amount <= 0) {
+                showAlert('Please enter a valid amount', 'error');
+                return;
+            }
+
+            showLoadingOverlay('Processing exchange...');
+            
+            try {
+                const response = await fetch('http://localhost:3010/api/currency/exchange', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('gmg_auth_token')}`
+                    },
+                    body: JSON.stringify({ fromCurrency: from, toCurrency: to, amount })
+                });
+                
+                const result = await response.json();
+                hideLoadingOverlay();
+                
+                if (result.success) {
+                    showAlert(`Exchanged ${from} ${amount} to ${to} ${result.data.toAmount}`, 'success');
+                    closeModal();
+                    loadDashboardData();
+                } else {
+                    showAlert(result.error || 'Exchange failed', 'error');
+                }
+            } catch (error) {
+                hideLoadingOverlay();
+                showAlert('Exchange failed: ' + error.message, 'error');
+            }
+        }
+
+        // Additional UI helper functions
+        function setAirtimeAmount(amount) {
+            document.getElementById('airtime-amount').value = amount;
+        }
+
+        function filterTransactions(type) {
+            // Update filter button styles
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            });
+            const activeBtn = document.getElementById('filter-' + type.toLowerCase());
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
+                activeBtn.classList.add('bg-purple-600', 'text-white');
+            }
+            // Load filtered transactions
+            loadFilteredTransactions(type === 'all' ? null : type);
+        }
+
+        async function loadFilteredTransactions(type) {
+            try {
+                const result = await gmgAPI.getTransactions(50, 0, type);
+                if (result.success && result.data) {
+                    const transactions = result.data.transactions || result.data;
+                    updateHistoryTransactionsList(transactions);
+                }
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        function updateHistoryTransactionsList(transactions) {
+            const listElement = document.getElementById('history-transactions-list');
+            if (!transactions || transactions.length === 0) {
+                listElement.innerHTML = '<div class="text-center text-gray-400 py-8"><div class="text-4xl mb-2">📋</div><p>No transactions found</p></div>';
+                return;
+            }
+            listElement.innerHTML = transactions.map(txn => `
+                <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center cursor-pointer hover:bg-gray-50" onclick="viewTransaction('${txn.id}')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl">
+                            ${getTransactionIcon(txn.type)}
+                        </div>
+                        <div>
+                            <div class="font-semibold">${txn.description || txn.type || 'Transaction'}</div>
+                            <div class="text-sm text-gray-500">${formatDate(txn.createdAt || txn.date)}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-bold ${isCredit(txn.type) ? 'text-green-600' : 'text-red-600'}">
+                            ${isCredit(txn.type) ? '+' : '-'}${formatMoney(txn.amount)}
+                        </div>
+                        <div class="text-xs text-gray-500">${txn.status}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Placeholder functions for features not yet implemented in backend
+        async function processBuyAirtime() {
+            alert('Airtime purchase feature coming soon!');
+            closeModal();
+        }
+
+        async function processBuyData() {
+            alert('Data bundle purchase feature coming soon!');
+            closeModal();
+        }
+
+        async function processPayBill(type) {
+            alert(`${type} bill payment feature coming soon!`);
+            closeModal();
+        }
+
+        async function processRequestMoney() {
+            alert('Money request feature coming soon!');
+            closeModal();
+        }
+
+        async function processBankTransfer() {
+            alert('Bank transfer feature coming soon!');
+            closeModal();
+        }
+
+        async function processChangePin() {
+            const currentPin = document.getElementById('current-pin').value;
+            const newPin = document.getElementById('new-pin').value;
+            const confirmPin = document.getElementById('confirm-pin').value;
+
+            if (!currentPin || currentPin.length !== 6) {
+                alert('Please enter your current 6-digit PIN');
+                return;
+            }
+            if (!newPin || newPin.length !== 6) {
+                alert('Please enter a new 6-digit PIN');
+                return;
+            }
+            if (newPin !== confirmPin) {
+                alert('New PIN and confirmation do not match');
+                return;
+            }
+            alert('PIN change feature coming soon!');
+            closeModal();
+        }
+
+        // Initialize QR code when QR page is shown
+        function initQRCode() {
+            const qrContainer = document.getElementById('qr-code');
+            const phone = localStorage.getItem('gmg_user_phone') || '+256700000000';
+            document.getElementById('qr-phone').textContent = phone;
+            
+            if (qrContainer && typeof QRCode !== 'undefined') {
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, {
+                    text: `gmg://pay?phone=${phone}`,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#0066FF',
+                    colorLight: '#ffffff'
+                });
+            }
+        }
+
+        // Override showPage to handle QR initialization
+        const originalShowPage = showPage;
+        showPage = function(pageId) {
+            originalShowPage(pageId);
+            if (pageId === 'qr-page') {
+                initQRCode();
+            }
+            if (pageId === 'history-page') {
+                loadFilteredTransactions(null);
+            }
+            if (pageId === 'beneficiaries-page') {
+                loadBeneficiaries();
+            }
+            if (pageId === 'profile-page') {
+                const phone = localStorage.getItem('gmg_user_phone');
+                document.getElementById('profile-phone').textContent = phone || '';
+            }
+        };
+    </script>
+</body>
+</html>

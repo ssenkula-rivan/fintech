@@ -1,0 +1,50 @@
+# GMG Uganda API - Production Dockerfile
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for native modules (ethers) and health checks
+RUN apk add --no-cache python3 make g++ curl
+
+# Copy package files first for better layer caching
+COPY package*.json ./
+
+# Install production dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy application code
+COPY . .
+
+# Create logs, backups, and uploads directories, make scripts executable
+RUN mkdir -p logs backups uploads/profiles && \
+    chmod +x docker-entrypoint.sh scripts/wait-for-db.js
+
+# Create non-root user for security (principle of least privilege)
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 -G nodejs
+
+# Set ownership
+RUN chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port
+EXPOSE 3010
+
+# Environment defaults (can be overridden)
+ENV NODE_ENV=production \
+    PORT=3010 \
+    DB_HOST=mysql \
+    DB_PORT=3306 \
+    DB_NAME=gmg_uganda \
+    REDIS_HOST=redis \
+    REDIS_PORT=6379
+
+# Health check with proper start period for database initialization
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD curl -f http://localhost:3010/health || exit 1
+
+# Use entrypoint script to wait for database
+ENTRYPOINT ["./docker-entrypoint.sh"]
