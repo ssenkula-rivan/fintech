@@ -177,3 +177,4 @@ GITHUB_TOKEN=your_personal_access_token ./scripts/create-github-issues.sh
 
 ## 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.
+
