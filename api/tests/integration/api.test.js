@@ -10,7 +10,9 @@ const request = require('supertest');
 // Set test environment BEFORE any imports
 process.env.NODE_ENV = 'test';
 process.env.PORT = '0'; // Use random available port
-process.env.JWT_SECRET = 'test-secret-key-minimum-32-characters-long-for-testing';
+process.env.DB_HOST = process.env.DB_HOST || 'localhost';
+process.env.DB_NAME = process.env.DB_NAME || 'gmg_uganda_test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-minimum-32-characters-long-for-testing';
 
 // Mock the database before importing app
 jest.mock('mysql2/promise', () => {

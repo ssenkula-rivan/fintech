@@ -105,6 +105,8 @@ jobs:
         env:
           NODE_ENV: test
           JWT_SECRET: ${{ env.JWT_SECRET }}
+          DB_HOST: localhost
+          DB_NAME: gmg_uganda_test
 
   # ============================================
   # JOB 4: Security Audit
@@ -136,8 +138,6 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
           extra_args: --only-verified
 
   # ============================================

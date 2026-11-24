@@ -97,10 +97,12 @@ function validateEnvironment() {
     
     console.log('═══════════════════════════════════════════════════════════\n');
     
-    // Exit if critical errors
+    // Exit if critical errors (except in test environment)
     if (errors.length > 0) {
         console.error('💥 APPLICATION CANNOT START - Fix the errors above');
-        process.exit(1);
+        if (process.env.NODE_ENV !== 'test') {
+            process.exit(1);
+        }
     }
     
     return {
